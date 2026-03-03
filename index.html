@@ -2,103 +2,86 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>SURGE</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
- <!-- タブ用（ブラウザのアドレスバーやタブに表示） -->
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon.png">
-
-<!-- 検索結果用（Googleが推奨する48×48以上） -->
-<link rel="icon" type="image/png" sizes="48x48" href="/favicon2.png">
-      <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-D6SC2D5KK4"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-D6SC2D5KK4');
-</script>
+  <title>Search</title>
   <style>
     body {
       margin: 0;
-      font-family: 'Helvetica Neue', sans-serif;
-      background: #f5f5f5;
-      color: #222;
+      padding: 0;
+      background: #fafafa;
+      font-family: "Segoe UI", sans-serif;
       display: flex;
       flex-direction: column;
-      align-items: center;
       justify-content: center;
+      align-items: center;
       height: 100vh;
-      padding: 0 20px;
+      color: #222;
     }
 
     h1 {
-      font-size: 48px;
+      font-weight: 300;
+      font-size: 2.4rem;
+      letter-spacing: 0.05em;
       margin-bottom: 40px;
-      letter-spacing: 2px;
     }
-    
-.search-box {
-  width: 100%;
-  max-width: 640px; 
-}
-    
-    input[type="search"]{
-      width: 100%;
-      padding: 14px 20px;
-      font-size: 18px; 
-      border: 1px solid #ccc;
-      border-radius: 32px;
+
+    .search-box {
+      width: 480px;
+      max-width: 90%;
+      display: flex;
+      align-items: center;
+      background: #fff;
+      border-radius: 40px;
+      padding: 12px 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+      transition: box-shadow 0.25s ease;
+    }
+
+    .search-box:focus-within {
+      box-shadow: 0 6px 28px rgba(0,0,0,0.12);
+    }
+
+    input {
+      flex: 1;
+      border: none;
       outline: none;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1); 
-    }
-   
-    .gcse-searchbox-only {
-      max-width: 640px;
-      width: 100%;
-    }
-        .info-block {
-      margin-top: 32px;
-      text-align: center;
+      font-size: 1.1rem;
+      background: transparent;
     }
 
-    .info-block a {
-      color: #0077cc;
-      text-decoration: none;
-      margin: 0 8px;
-      font-size: 16px;
+    button {
+      border: none;
+      background: #0078d4;
+      color: #fff;
+      padding: 10px 22px;
+      border-radius: 30px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.25s ease;
     }
 
-    .info-block p {
-      margin: 8px 0;
-      font-size: 14px;
-      color: #666;
+    button:hover {
+      background: #005fa3;
+    }
+
+    footer {
+      position: absolute;
+      bottom: 20px;
+      font-size: 0.85rem;
+      color: #777;
+      letter-spacing: 0.03em;
     }
   </style>
 </head>
 <body>
-<h1>SURGE</h1>
-  <div class="search-box"> 
-<div class="gcse-searchbox-only" data-resultsUrl="results"></div>
-<script async src="https://cse.google.com/cse.js?cx=818be131768c247f3"></script>
 
-    <!-- 情報ブロック -->
-  <div class="info-block">
-    <!-- カテゴリリンク -->
-    <div>
-      <a href="results.html?q=UI">UI</a>
-      <a href="results.html?q=UX">UX</a>
-      <a href="results.html?q=詩的">詩的</a>
-      <a href="results.html?q=静けさ">静けさ</a>
-      <a href="results.html?q=デザイン">デザイン</a>
-    </div>
+  <h1>Search</h1>
 
-    <!-- おすすめキーワード -->
-    <p>今日のおすすめ：<a href="results.html?q=空気感">空気感</a></p>
+  <form action="/search" method="GET" class="search-box">
+    <input type="text" name="q" placeholder="キーワードを入力…" autocomplete="off">
+    <button type="submit">検索</button>
+  </form>
 
-    <!-- 詩的な一文 -->
-    <p>SURGEは、静けさの中にある発見を探す場所です。</p>
-
+  <footer>© 2026</footer>
 
 </body>
 </html>
