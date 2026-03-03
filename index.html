@@ -34,14 +34,15 @@
       top:12px;
       right:12px;
       display:flex;
-      gap:.45rem; /* ← 変な隙間を消す */
+      gap:.6rem;
       align-items:center;
     }
+
+    /* ボタンを大きくしてアイコン3倍 */
     .settings-btn{
-      padding:.45rem .55rem; /* ← 横の余白を調整 */
-      font-size:.9rem;
+      padding:1rem 1.2rem;
       border:1px solid var(--border);
-      border-radius:10px;
+      border-radius:14px;
       background:#fff;
       cursor:pointer;
       display:flex;
@@ -49,7 +50,7 @@
       justify-content:center;
     }
     .settings-btn i{
-      font-size:1.35rem; /* ← アイコンを大きく */
+      font-size:2.4rem; /* ← 3倍サイズ */
     }
 
     /* center */
@@ -61,16 +62,20 @@
       padding:10vh 2rem 6vh;
       text-align:center;
     }
+
+    /* SURGE のタイトルを大きく */
     h1{
       margin:0 0 .25rem;
-      font-weight:600;
-      letter-spacing:.04em;
-      color:#444;
+      font-weight:700;
+      font-size:3.4rem; /* ← 大型化 */
+      letter-spacing:.06em;
+      color:#333;
     }
+
     .subtitle{
       margin:0 0 2.2rem;
       color:var(--muted);
-      font-size:1rem;
+      font-size:1.1rem;
     }
 
     /* search input（縦を大きくした版） */
@@ -210,7 +215,7 @@
   <div class="topbar">
     <a href="/ai/" class="settings-btn" style="text-decoration:none; color:inherit;">AI</a>
 
-    <!-- その他アプリ（アイコン大きめ） -->
+    <!-- その他アプリ（アイコン3倍） -->
     <button class="settings-btn" id="openApps" aria-label="その他アプリ">
       <i class="fa-solid fa-table-cells"></i>
     </button>
