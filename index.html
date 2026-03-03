@@ -49,31 +49,27 @@
       text-decoration: none;
     }
 
-    /* 設定ボタン（枠なし） */
+    /* 設定ボタン（余計な装飾をすべて排除） */
     .settings-btn {
-      padding: 0;
+      padding: 8px;          /* クリックしやすくするための余白 */
       background: transparent;
       border: none;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: transform 0.15s ease;
+      transition: opacity 0.2s ease;
     }
     
     .settings-btn:hover {
-      transform: scale(1.1);
+      opacity: 0.6;          /* ホバー時に少し薄くする */
     }
 
-    /* アイコン自体を「黒地に背景色のドット」に反転 */
+    /* 9つのドットそのものを黒くする */
     .settings-btn i {
-      font-size: 1.8rem;     /* 視認性の良いサイズ */
-      background-color: #000; /* アイコンの背景（土台）を黒に */
-      color: var(--bg);      /* ドット部分を背景色（白系）で抜き出す */
-      padding: 4px;          /* 黒い領域を少し広げる */
-      border-radius: 4px;    /* 少しだけ角を丸くすると綺麗です */
-      /* 下記はドットの隙間から黒が見えるように調整 */
-      display: inline-flex;
+      font-size: 1.6rem;     /* ちょうどいいサイズ */
+      color: #000;           /* 純粋にアイコンの色を黒に */
+      background: none;      /* 背景はなし */
     }
 
     /* center content */
