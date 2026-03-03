@@ -27,7 +27,7 @@
       justify-content: center;
     }
 
-    /* top-right bar */
+    /* 右上のバー */
     .topbar {
       position: fixed;
       top: 16px;
@@ -49,7 +49,7 @@
       text-decoration: none;
     }
 
-    /* 設定ボタン：装飾なし */
+    /* 設定ボタン：3x2の黒いドット（背景なし） */
     .settings-btn {
       padding: 8px;
       background: transparent;
@@ -60,19 +60,16 @@
       justify-content: center;
       transition: opacity 0.2s ease;
     }
-    
     .settings-btn:hover {
       opacity: 0.5;
     }
-
-    /* 2x3（6つの点）そのものを黒くする */
     .settings-btn i {
       font-size: 1.8rem;
-      color: #000;      /* 点の色を黒に */
-      background: none; /* 背景はなし */
+      color: #000;
+      background: none;
     }
 
-    /* center content */
+    /* 中央コンテンツ */
     .center {
       width: 100%;
       display: flex;
@@ -96,6 +93,7 @@
       font-size: 1.1rem;
     }
 
+    /* 検索入力欄 */
     #query {
       width: min(92vw, 640px);
       padding: 1.35rem 1.4rem;
@@ -105,9 +103,13 @@
       background: #fff;
       box-shadow: 0 2px 12px var(--shadow);
       outline: none;
+      transition: border-color .2s ease;
+    }
+    #query:focus {
+      border-color: var(--accent);
     }
 
-    /* modal */
+    /* モーダル */
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -170,7 +172,7 @@
   <main class="center">
     <h1>SURGE</h1>
     <p class="subtitle">光のように、知をたどる。</p>
-    <input id="query" type="text" placeholder="検索ワードを入力…" autocomplete="off"/>
+    <input id="query" type="text" placeholder="検索ワードを入力…" autocomplete="off" spellcheck="false"/>
   </main>
 
   <div class="modal-backdrop" id="appsModal">
@@ -190,10 +192,29 @@
   </div>
 
   <script>
+    // 検索機能：Enterキーで /search?q= に遷移
+    const queryInput = document.getElementById("query");
+    queryInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        const q = queryInput.value.trim();
+        if (q) {
+          window.location.href = `/search?q=${encodeURIComponent(q)}`;
+        }
+      }
+    });
+
+    // モーダルの制御
     const appsModal = document.getElementById("appsModal");
-    document.getElementById("openApps").onclick = () => appsModal.style.display = "flex";
-    document.getElementById("closeApps").onclick = () => appsModal.style.display = "none";
-    window.onclick = (e) => { if (e.target == appsModal) appsModal.style.display = "none"; };
+    const openBtn = document.getElementById("openApps");
+    const closeBtn = document.getElementById("closeApps");
+
+    openBtn.onclick = () => appsModal.style.display = "flex";
+    closeBtn.onclick = () => appsModal.style.display = "none";
+
+    // 外側クリックで閉じる
+    window.onclick = (e) => {
+      if (e.target === appsModal) appsModal.style.display = "none";
+    };
   </script>
 
 </body>
