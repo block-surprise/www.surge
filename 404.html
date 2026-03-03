@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>404 - 接続エラー</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --text: #334155;
+            --accent: #10b981;
+            --sub-text: #94a3b8;
+        }
+
+        body {
+            margin: 0; background: var(--bg); color: var(--text);
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            display: flex; align-items: center; justify-content: center;
+            height: 100vh; text-align: center;
+        }
+
+        .container { max-width: 500px; padding: 20px; }
+
+        .error-num {
+            font-size: 8rem; font-weight: 800; margin: 0;
+            background: linear-gradient(135deg, var(--accent), #34d399);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            line-height: 1;
+        }
+
+        h1 { font-size: 1.5rem; margin-top: 10px; }
+        p { color: var(--sub-text); line-height: 1.6; margin-bottom: 40px; }
+
+        /* ボタンのデザイン */
+        .btn-group { display: flex; gap: 15px; justify-content: center; }
+
+        .btn {
+            padding: 12px 28px; border-radius: 50px; text-decoration: none;
+            font-weight: bold; font-size: 0.9rem; transition: 0.3s;
+            cursor: pointer; border: none; font-family: inherit;
+        }
+
+        /* 更新ボタン（メイン） */
+        .btn-reload {
+            background: var(--accent); color: white;
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2);
+        }
+        .btn-reload:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(16, 185, 129, 0.3); }
+        .btn-reload:active { transform: translateY(-1px); }
+
+        /* ホームへ戻るボタン（サブ） */
+        .btn-home { background: #e2e8f0; color: #64748b; }
+        .btn-home:hover { background: #cbd5e1; }
+
+        /* アイコンのアニメーション */
+        .icon { display: inline-block; margin-right: 8px; transition: transform 0.5s; }
+        .btn-reload:hover .icon { transform: rotate(180deg); }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="error-num">404</div>
+        <h1>ページが見つかりません</h1>
+        <p>
+            お探しのページは、一時的にアクセスできないか、<br>
+            移動または削除された可能性があります。
+        </p>
+
+        <div class="btn-group">
+            <button class="btn btn-reload" onclick="location.reload();">
+                <span class="icon">↻</span> ページを再読み込み
+            </button>
+            
+            <a href="index.html" class="btn btn-home">ホームへ戻る</a>
+        </div>
+    </div>
+
+</body>
+</html>

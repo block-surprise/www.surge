@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>SURGE SCAN</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root { --accent: #4f46e5; --bg: #fdfdfd; }
+    body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+
+    .scan-container { text-align: center; width: 90%; max-width: 500px; padding: 40px; background: white; border-radius: 32px; box-shadow: 0 15px 40px rgba(0,0,0,0.05); }
+    
+    .scan-window {
+      width: 240px; height: 240px; margin: 0 auto 30px; border: 3px solid #eee; border-radius: 40px; position: relative;
+      display: flex; align-items: center; justify-content: center; background: #fafafa; cursor: pointer; overflow: hidden;
+    }
+    
+    /* 検索結果が出るエリア（ここが重要） */
+    #results-area { width: 100%; margin-top: 30px; }
+
+    /* Googleの標準入力欄を「透明」にして、SURGEのボタンの上に重ねる */
+    #hidden-cse-overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; z-index: 100; cursor: pointer;
+    }
+
+    .btn-scan { background: var(--accent); color: white; padding: 16px 40px; border-radius: 30px; font-weight: bold; border: none; font-size: 16px; }
+    
+    /* 読み込み待ちの表示 */
+    #loading-msg { font-size: 12px; color: #aaa; margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+  <div class="scan-container">
+    <h1>SURGE <span style="color:var(--accent)">SCAN</span></h1>
+    <p>画像をアップロードして検索</p>
+
+    <div class="scan-window">
+      <div id="hidden-cse-overlay">
+        <div class="gcse-search"></div>
+      </div>
+      
+      <div style="text-align:center;">
+        <span style="font-size: 50px;">📷</span><br>
+        <span style="font-size: 12px; color:#aaa;">ここをクリックして開始</span>
+      </div>
+    </div>
+
+    <div id="loading-msg">Googleエンジンを読み込み中...</div>
+    <a href="/" style="display:block; margin-top:20px; color:#999; text-decoration:none; font-size:14px;">← 戻る</a>
+  </div>
+
+  <div id="results-area">
+    <div class="gcse-searchresults-only" data-imageSearch="true"></div>
+  </div>
+
+  <script>
+    // Google CSEの読み込みを監視
+    window.__gcse = {
+      callback: function() {
+        document.getElementById('loading-msg').innerText = "準備完了";
+        
+        // Googleの入力欄からカメラボタンを探し、押しやすく調整
+        const interval = setInterval(() => {
+          const cameraBtn = document.querySelector('.gsst_a');
+          if (cameraBtn) {
+            document.getElementById('loading-msg').innerText = "スキャン機能 利用可能";
+            clearInterval(interval);
+          }
+        }, 500);
+      }
+    };
+  </script>
+
+  <script async src="https://cse.google.com/cse.js?cx=818be131768c247f3"></script>
+
+</body>
+</html>
