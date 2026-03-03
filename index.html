@@ -38,20 +38,29 @@
       align-items:center;
     }
 
-    /* Google風9ドット（黒背景 × 白アイコン） */
+    /* 枠なし・背景なし・Google風アイコンだけ */
     .settings-btn{
-      padding:1rem 1.2rem;
-      background:#000;
-      border:1px solid #000;
-      border-radius:14px;
+      padding:.6rem;
+      background:transparent;
+      border:none;
       cursor:pointer;
       display:flex;
       align-items:center;
       justify-content:center;
     }
     .settings-btn i{
-      font-size:2.4rem; /* ← 3倍サイズ */
-      color:#fff;       /* ← 白アイコン */
+      font-size:2.4rem; /* ← 大きめ（Google風） */
+      color:#000;       /* ← 黒アイコン */
+    }
+
+    /* AI ボタンも枠なしで自然に */
+    .ai-btn{
+      padding:.6rem .8rem;
+      background:transparent;
+      border:none;
+      font-size:1.2rem;
+      color:#000;
+      cursor:pointer;
     }
 
     /* center */
@@ -214,9 +223,9 @@
 
   <!-- top bar -->
   <div class="topbar">
-    <a href="/ai/" class="settings-btn" style="text-decoration:none; color:#fff; background:#000;">AI</a>
+    <a href="/ai/" class="ai-btn">AI</a>
 
-    <!-- Google風アイコン（黒背景 × 白アイコン） -->
+    <!-- Google風アイコン（枠なし・背景なし・黒アイコン） -->
     <button class="settings-btn" id="openApps" aria-label="その他アプリ">
       <i class="fa-solid fa-table-cells"></i>
     </button>
@@ -230,7 +239,6 @@
     <input id="query" type="text" placeholder="検索ワードを入力…" autocomplete="off" spellcheck="false"/>
 
     <section class="history" id="historySection" aria-label="検索履歴">
-      <p class="history-title">最近の検索</p>
       <div class="history-list" id="history"></div>
     </section>
   </main>
