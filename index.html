@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>SURGE</title>
 
-  <!-- Font Awesome -->
+  <!-- Font Awesome（無料版） -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
   <style>
@@ -54,7 +54,6 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      gap:.3rem;
     }
     .settings-btn i{
       font-size:1.05rem;
@@ -81,25 +80,17 @@
       font-size:1rem;
     }
 
-    /* search input */
+    /* search input（縦を大きくした版） */
     #query{
       width:min(92vw, 640px);
-      padding:0.95rem 1.25rem;
-      font-size:1.25rem;
+      padding:1.35rem 1.4rem; /* ← 縦を大きく */
+      font-size:1.28rem;
       border:1px solid var(--border);
-      border-radius:32px;
+      border-radius:36px;
       background:#fff;
-      box-shadow: 0 2px 10px var(--shadow);
+      box-shadow: 0 2px 12px var(--shadow);
       outline:none;
       transition: border-color .2s ease, box-shadow .2s ease, transform .18s ease;
-    }
-    .animated:focus{
-      border-color:var(--accent);
-      box-shadow: 0 0 0 4px rgba(77,166,255,.18), 0 6px 22px var(--shadow);
-      transform: translate3d(0,-1px,0);
-    }
-    .animated:hover{
-      box-shadow: 0 3px 14px var(--shadow);
     }
 
     /* history */
@@ -175,20 +166,28 @@
       border-radius:12px;
       padding:.9rem;
     }
-    .row{
-      display:flex;
-      gap:.8rem;
-      flex-wrap:wrap;
-      align-items:center;
-    }
     .label{
       color:#555;
       font-size:.95rem;
-      min-width:170px;
+      margin-bottom:.4rem;
     }
     .list{
       display:grid;
       gap:.35rem;
+    }
+    .app-item{
+      padding:.45rem .7rem;
+      border:1px solid var(--border);
+      border-radius:8px;
+      background:#fff;
+      text-decoration:none;
+      color:var(--text);
+      display:inline-block;
+      transition:border-color .2s ease, color .2s ease;
+    }
+    .app-item:hover{
+      border-color:var(--accent);
+      color:var(--accent);
     }
     .modal-footer{
       padding:.9rem 1.2rem;
@@ -209,35 +208,7 @@
       color:#fff;
       background:var(--accent);
     }
-    .btn.danger{
-      border-color:#e07272;
-      color:#fff;
-      background:#e07272;
-    }
-    .small{
-      font-size:.9rem;
-      color:#777;
-    }
 
-    /* app list */
-    .app-item{
-      padding:.45rem .7rem;
-      border:1px solid var(--border);
-      border-radius:8px;
-      background:#fff;
-      text-decoration:none;
-      color:var(--text);
-      display:inline-block;
-      transition:border-color .2s ease, color .2s ease;
-    }
-    .app-item:hover{
-      border-color:var(--accent);
-      color:var(--accent);
-    }
-
-    @media (max-width:520px){
-      .label{min-width:auto}
-    }
   </style>
 </head>
 <body>
@@ -248,9 +219,9 @@
 
     <select id="engine" aria-label="検索先"></select>
 
-    <!-- その他アプリ（Font Awesome アイコン） -->
+    <!-- その他アプリ（Font Awesome 無料版アイコン） -->
     <button class="settings-btn" id="openApps" aria-label="その他アプリ">
-      <i class="fa-solid fa-grid-2"></i>
+      <i class="fa-solid fa-table-cells"></i>
     </button>
   </div>
 
@@ -276,8 +247,6 @@
       </div>
 
       <div class="modal-body">
-
-        <!-- app list -->
         <div class="section">
           <div class="label">アプリ一覧</div>
           <div class="list" id="appList">
@@ -288,34 +257,19 @@
             <a class="app-item" href="/tools/">ツール集</a>
           </div>
         </div>
-
-        <!-- custom app -->
-        <div class="section">
-          <div class="label">カスタムアプリの追加</div>
-          <div class="row">
-            <input id="customAppName" type="text" placeholder="名前（例：Markdownエディタ）"
-              style="flex:1; padding:.45rem .6rem; border:1px solid var(--border); border-radius:8px;">
-            <input id="customAppUrl" type="text" placeholder="URL（例：/md/）"
-              style="flex:2; padding:.45rem .6rem; border:1px solid var(--border); border-radius:8px;">
-            <button class="btn" id="addCustomApp">追加</button>
-          </div>
-          <div id="customAppList" class="list"></div>
-        </div>
-
       </div>
 
       <div class="modal-footer">
-        <button class="btn" id="resetApps">初期化</button>
-        <button class="btn primary" id="saveApps">保存</button>
+        <button class="btn primary" id="closeApps2">閉じる</button>
       </div>
     </div>
   </div>
 
   <script>
-    // modal open/close
     const appsModal = document.getElementById("appsModal");
     document.getElementById("openApps").onclick = () => appsModal.style.display = "flex";
     document.getElementById("closeApps").onclick = () => appsModal.style.display = "none";
+    document.getElementById("closeApps2").onclick = () => appsModal.style.display = "none";
   </script>
 
 </body>
