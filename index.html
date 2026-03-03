@@ -34,21 +34,14 @@
       top:12px;
       right:12px;
       display:flex;
-      gap:.5rem;
+      gap:.45rem; /* ← 変な隙間を消す */
       align-items:center;
     }
-    #engine{
-      padding:.35rem .6rem;
-      font-size:.95rem;
-      border:1px solid var(--border);
-      border-radius:8px;
-      background:#fff;
-    }
     .settings-btn{
-      padding:.35rem .6rem;
+      padding:.45rem .55rem; /* ← 横の余白を調整 */
       font-size:.9rem;
       border:1px solid var(--border);
-      border-radius:8px;
+      border-radius:10px;
       background:#fff;
       cursor:pointer;
       display:flex;
@@ -56,7 +49,7 @@
       justify-content:center;
     }
     .settings-btn i{
-      font-size:1.05rem;
+      font-size:1.35rem; /* ← アイコンを大きく */
     }
 
     /* center */
@@ -83,7 +76,7 @@
     /* search input（縦を大きくした版） */
     #query{
       width:min(92vw, 640px);
-      padding:1.35rem 1.4rem; /* ← 縦を大きく */
+      padding:1.35rem 1.4rem;
       font-size:1.28rem;
       border:1px solid var(--border);
       border-radius:36px;
@@ -217,9 +210,7 @@
   <div class="topbar">
     <a href="/ai/" class="settings-btn" style="text-decoration:none; color:inherit;">AI</a>
 
-    <select id="engine" aria-label="検索先"></select>
-
-    <!-- その他アプリ（Font Awesome 無料版アイコン） -->
+    <!-- その他アプリ（アイコン大きめ） -->
     <button class="settings-btn" id="openApps" aria-label="その他アプリ">
       <i class="fa-solid fa-table-cells"></i>
     </button>
@@ -265,7 +256,19 @@
     </div>
   </div>
 
+  <!-- 検索機能（Enter → /search?q=） -->
   <script>
+    const queryInput = document.getElementById("query");
+    queryInput.addEventListener("keydown", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const q = encodeURIComponent(queryInput.value.trim());
+        if (!q) return;
+        window.location.href = `/search?q=${q}`;
+      }
+    });
+
+    // modal open/close
     const appsModal = document.getElementById("appsModal");
     document.getElementById("openApps").onclick = () => appsModal.style.display = "flex";
     document.getElementById("closeApps").onclick = () => appsModal.style.display = "none";
