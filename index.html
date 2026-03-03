@@ -49,11 +49,11 @@
       text-decoration: none;
     }
 
-    /* 設定ボタン（余計な装飾をすべて排除） */
+    /* 設定ボタン：枠も背景も完全に排除 */
     .settings-btn {
-      padding: 8px;          /* クリックしやすくするための余白 */
-      background: transparent;
-      border: none;
+      padding: 8px;
+      background: transparent; /* 背景なし */
+      border: none;             /* 枠なし */
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -62,14 +62,14 @@
     }
     
     .settings-btn:hover {
-      opacity: 0.6;          /* ホバー時に少し薄くする */
+      opacity: 0.5; /* ホバー時に少し透明にするだけの演出 */
     }
 
-    /* 9つのドットそのものを黒くする */
+    /* 9つのドットそのものの色を黒にする */
     .settings-btn i {
-      font-size: 1.6rem;     /* ちょうどいいサイズ */
-      color: #000;           /* 純粋にアイコンの色を黒に */
-      background: none;      /* 背景はなし */
+      font-size: 1.8rem;
+      color: #000;      /* 点の色を黒に */
+      background: none; /* 背景をつけない */
     }
 
     /* center content */
