@@ -38,22 +38,7 @@
       align-items:center;
     }
 
-    /* 枠なし・背景なし・Google風アイコンだけ */
-    .settings-btn{
-      padding:.6rem;
-      background:transparent;
-      border:none;
-      cursor:pointer;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-    .settings-btn i{
-      font-size:2.4rem; /* ← 大きめ（Google風） */
-      color:#000;       /* ← 黒アイコン */
-    }
-
-    /* AI ボタンも枠なしで自然に */
+    /* AI ボタン（枠なし） */
     .ai-btn{
       padding:.6rem .8rem;
       background:transparent;
@@ -61,6 +46,22 @@
       font-size:1.2rem;
       color:#000;
       cursor:pointer;
+    }
+
+    /* Googleダークモード風：黒背景 × 白アイコン（枠なし） */
+    .settings-btn{
+      padding:1rem 1.2rem;
+      background:#000;   /* ← 黒背景 */
+      border:none;       /* ← 枠なし */
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:14px;
+    }
+    .settings-btn i{
+      font-size:2.4rem;  /* ← 大きめ（Google風） */
+      color:#fdfdfd;     /* ← 背景色と同じ白 */
     }
 
     /* center */
@@ -225,7 +226,7 @@
   <div class="topbar">
     <a href="/ai/" class="ai-btn">AI</a>
 
-    <!-- Google風アイコン（枠なし・背景なし・黒アイコン） -->
+    <!-- Google風（黒背景 × 白アイコン） -->
     <button class="settings-btn" id="openApps" aria-label="その他アプリ">
       <i class="fa-solid fa-table-cells"></i>
     </button>
