@@ -179,7 +179,7 @@
       const type = el.getAttribute('data-type');
       const q = document.getElementById('searchInput').value.trim();
       if (!q) return;
-      if (type === 'image') { location.href = `https://surge.ad-hub.f5.si/results?q=${encodeURIComponent(q)}#gsc.tab=1&gsc.q=${encodeURIComponent(q)}`; return; }
+      if (type === 'image') { location.href = `https://www.surge.f5.si/search?q=${encodeURIComponent(q)}#gsc.tab=1&gsc.q=${encodeURIComponent(q)}`; return; }
       
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); el.classList.add('active');
       const summaryBox = document.getElementById('aiSummaryBox'), aiModeArea = document.getElementById('aiModeContainer'), webArea = document.getElementById('webResultsArea');
