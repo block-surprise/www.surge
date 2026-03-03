@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>タイマー - SURGE</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    :root {
+      --bg: #fdfdfd;
+      --text: #333;
+      --muted: #888;
+      --accent: #4da6ff;
+      --danger: #ff4d4d;
+      --shadow: rgba(0,0,0,0.06);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Hiragino Kaku Gothic ProN", "ヒラギノ角ゴ ProN W3", "Yu Gothic", sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ヘッダー */
+    .header {
+      position: absolute;
+      top: env(safe-area-inset-top, 20px);
+      left: 20px;
+    }
+    .back-btn {
+      text-decoration: none;
+      color: var(--text);
+      font-size: 1.1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* タイマー表示 */
+    .timer-display {
+      font-size: 5rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      margin-bottom: 2rem;
+      letter-spacing: -2px;
+    }
+
+    /* 時間設定入力（スマホで入力しやすいよう調整） */
+    .inputs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 3rem;
+      align-items: baseline;
+    }
+    .inputs input {
+      width: 70px;
+      padding: 10px;
+      font-size: 1.5rem;
+      text-align: center;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      outline: none;
+    }
+    .inputs span { font-weight: 600; color: var(--muted); }
+
+    /* 操作ボタン */
+    .controls {
+      display: flex;
+      gap: 20px;
+    }
+    .btn {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: none;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px var(--shadow);
+    }
+    .btn:active { transform: scale(0.95); }
+    
+    .start-btn { background: var(--accent); color: white; }
+    .stop-btn { background: var(--danger); color: white; display: none; }
+    .reset-btn { background: #eee; color: var(--text); }
+
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <a href="/" class="back-btn"><i class="fa-solid fa-chevron-left"></i> 戻る</a>
+  </header>
+
+  <main>
+    <div class="timer-display" id="display">00:00</div>
+
+    <div class="inputs" id="inputArea">
+      <input type="number" id="min" placeholder="0" min="0" max="99" inputmode="numeric">
+      <span>分</span>
+      <input type="number" id="sec" placeholder="0" min="0" max="59" inputmode="numeric">
+      <span>秒</span>
+    </div>
+
+    <div class="controls">
+      <button class="btn reset-btn" id="resetBtn">リセット</button>
+      <button class="btn start-btn" id="startBtn">開始</button>
+      <button class="btn stop-btn" id="stopBtn">停止</button>
+    </div>
+  </main>
+
+  <script>
+    let timeLeft;
+    let timerId = null;
+
+    const display = document.getElementById('display');
+    const inputArea = document.getElementById('inputArea');
+    const minInput = document.getElementById('min');
+    const secInput = document.getElementById('sec');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    function updateDisplay(s) {
+      const m = Math.floor(s / 60);
+      const rs = s % 60;
+      display.textContent = 
+        `${m.toString().padStart(2, '0')}:${rs.toString().padStart(2, '0')}`;
+    }
+
+    startBtn.onclick = () => {
+      const m = parseInt(minInput.value) || 0;
+      const s = parseInt(secInput.value) || 0;
+      timeLeft = m * 60 + s;
+
+      if (timeLeft <= 0) return;
+
+      inputArea.style.visibility = 'hidden';
+      startBtn.style.display = 'none';
+      stopBtn.style.display = 'flex';
+
+      timerId = setInterval(() => {
+        timeLeft--;
+        updateDisplay(timeLeft);
+        if (timeLeft <= 0) {
+          clearInterval(timerId);
+          alert('時間になりました！');
+          resetTimer();
+        }
+      }, 1000);
+    };
+
+    stopBtn.onclick = () => {
+      clearInterval(timerId);
+      startBtn.style.display = 'flex';
+      stopBtn.style.display = 'none';
+    };
+
+    function resetTimer() {
+      clearInterval(timerId);
+      inputArea.style.visibility = 'visible';
+      display.textContent = '00:00';
+      minInput.value = '';
+      secInput.value = '';
+      startBtn.style.display = 'flex';
+      stopBtn.style.display = 'none';
+    }
+
+    resetBtn.onclick = resetTimer;
+  </script>
+
+</body>
+</html>
