@@ -6,11 +6,11 @@
     <title>打つだけ。 | プレイ画面</title>
     <style>
         :root {
-            --primary-color: #ff7e5f;
-            --secondary-color: #feb47b;
-            --bg-color: #fefdfb;
-            --text-main: #2c3e50;
-            --accent: #3498db;
+            --primary-color: #ff6b6b;
+            --secondary-color: #feca57;
+            --bg-color: #f7f1e3;
+            --text-main: #2d3436;
+            --accent: #48dbfb;
         }
 
         body {
@@ -27,49 +27,24 @@
         }
 
         .stats {
-            position: absolute;
-            top: 20px;
-            display: flex;
-            gap: 40px;
-            font-size: 1.2rem;
-            font-weight: bold;
+            position: absolute; top: 20px;
+            display: flex; gap: 40px;
+            font-size: 1.2rem; font-weight: bold;
         }
-
-        #timer { color: var(--primary-color); }
 
         .game-canvas {
-            width: 850px;
-            height: 380px;
-            background: white;
-            border-radius: 40px;
-            box-shadow: 0 15px 50px rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            border: 2px solid #f0f0f0;
+            width: 850px; height: 380px;
+            background: white; border-radius: 40px;
+            box-shadow: 10px 10px 0px rgba(0,0,0,0.05);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            border: 4px solid var(--text-main);
         }
 
-        #kanji-display {
-            font-size: 4.5rem;
-            margin-bottom: 20px;
-            letter-spacing: 0.05em;
-        }
-
-        #roma-display {
-            font-size: 2.2rem;
-            color: #bdc3c7;
-            font-weight: bold;
-            font-family: 'Courier New', monospace;
-            min-height: 1.5em;
-        }
-
+        #kanji-display { font-size: 4.5rem; margin-bottom: 20px; }
+        #roma-display { font-size: 2.2rem; color: #ccc; font-weight: bold; font-family: monospace; }
         .char-done { color: var(--accent); }
-        .char-current { 
-            border-bottom: 4px solid var(--primary-color);
-            color: var(--text-main);
-        }
+        .char-current { border-bottom: 4px solid var(--primary-color); color: var(--text-main); }
 
         .shake { animation: shake 0.2s; }
         @keyframes shake {
@@ -79,27 +54,16 @@
         }
 
         #result-screen {
-            display: none;
-            position: fixed;
-            inset: 0;
+            display: none; position: fixed; inset: 0;
             background: rgba(255,255,255,0.98);
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            flex-direction: column; align-items: center; justify-content: center;
             z-index: 100;
         }
-
-        .result-score { font-size: 6rem; color: var(--primary-color); font-weight: bold; }
         .btn-retry {
-            margin: 10px;
-            padding: 18px 60px;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            border: none;
-            border-radius: 50px;
-            font-size: 1.3rem;
-            cursor: pointer;
-            text-decoration: none;
+            margin: 10px; padding: 18px 60px;
+            background: var(--primary-color); color: white;
+            border: 3px solid var(--text-main); border-radius: 50px;
+            font-size: 1.3rem; cursor: pointer; text-decoration: none;
         }
     </style>
 </head>
@@ -114,40 +78,31 @@
         <div id="kanji-display">準備はいい？</div>
         <div id="roma-display">Spaceキーでスタート</div>
     </div>
-<!-- admax -->
-<script src="https://adm.shinobi.jp/s/3fca9fb2dfe3e7a1176425f21d3e9ab7"></script>
-<!-- admax -->
+
     <div id="result-screen">
         <h2>結果発表</h2>
-        <div class="result-score" id="final-score">0</div>
-        <p>正解タイプ数</p>
+        <div style="font-size:6rem; color:var(--primary-color); font-weight:bold;" id="final-score">0</div>
         <a href="record.html" class="btn-retry">図鑑を見る</a>
         <button class="btn-retry" style="background: #ccc;" onclick="location.reload()">もう一度</button>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/roman-kana-typing@1.0.1/dist/bundle.js"></script>
+
     <script>
-        // 単語リスト
         const wordList = [
-            { k: "学校", r: "gakkou" },
-            { k: "新千歳空港", r: "shinchitosekuukou" },
-            { k: "文房具", r: "bunbougu" },
-            { k: "サージプロ", r: "sa-jipuro" },
-            { k: "プログラミング", r: "puroguramingu" },
-            { k: "回転寿司", r: "kaitenzushi" },
-            { k: "飛行機", r: "hikouki" },
-            { k: "YouTube", r: "yu-tyu-bu" },
-            { k: "最高速度", r: "saikousokudo" }
+            { k: "学校", y: "gakkou" },
+            { k: "新千歳空港", y: "shinchitosekuukou" },
+            { k: "文房具", y: "bunbougu" },
+            { k: "サージプロ", y: "sa-jipuro" },
+            { k: "プログラミング", y: "puroguramingu" },
+            { k: "回転寿司", y: "kaitenzushi" },
+            { k: "飛行機", y: "hikouki" },
+            { k: "YouTube", y: "yu-tyu-bu" },
+            { k: "最高速度", y: "saikousokudo" }
         ];
 
-        let score = 0;
-        let timeLeft = 60;
-        let isPlaying = false;
-        let timerId = null;
-
-        let currentRoma = "";
-        let charIndex = 0;
-        let wordStartTime = 0;
-        let wordMissCount = 0;
+        let score = 0, timeLeft = 60, isPlaying = false, timerId = null;
+        let typingEngine = null, wordStartTime = 0, wordMissCount = 0;
 
         const kanjiEl = document.getElementById('kanji-display');
         const romaEl = document.getElementById('roma-display');
@@ -155,9 +110,7 @@
         const timerEl = document.getElementById('timer');
         const canvasEl = document.getElementById('canvas');
 
-        // キー入力イベント（ここが心臓部です）
         window.addEventListener('keydown', e => {
-            // ゲーム開始判定
             if (!isPlaying) {
                 if (e.code === 'Space') {
                     e.preventDefault();
@@ -166,17 +119,11 @@
                 return;
             }
 
-            // タイピング判定
-            const targetChar = currentRoma[charIndex];
-            
-            if (e.key === targetChar) {
-                // 正解
-                charIndex++;
+            // タイピング判定（ライブラリを使用し、入力ミスを柔軟に判定）
+            if (typingEngine.input(e.key)) {
                 score++;
                 scoreEl.textContent = score;
-                
-                if (charIndex === currentRoma.length) {
-                    // 単語完成
+                if (typingEngine.isFinished()) {
                     const timeTaken = ((Date.now() - wordStartTime) / 1000).toFixed(2);
                     saveToLibrary(kanjiEl.textContent, timeTaken, wordMissCount);
                     nextWord();
@@ -184,8 +131,7 @@
                     updateDisplay();
                 }
             } else {
-                // ミス（Shift等は無視）
-                if (e.key.length === 1) {
+                if (e.key.length === 1 && e.key !== " ") {
                     wordMissCount++;
                     canvasEl.classList.add('shake');
                     setTimeout(() => canvasEl.classList.remove('shake'), 200);
@@ -194,9 +140,7 @@
         });
 
         function startGame() {
-            isPlaying = true;
-            score = 0;
-            timeLeft = 60;
+            isPlaying = true; score = 0; timeLeft = 60;
             scoreEl.textContent = "0";
             nextWord();
             timerId = setInterval(() => {
@@ -209,19 +153,19 @@
         function nextWord() {
             const data = wordList[Math.floor(Math.random() * wordList.length)];
             kanjiEl.textContent = data.k;
-            currentRoma = data.r;
-            charIndex = 0;
+            // ここでライブラリのエンジンを初期化！
+            typingEngine = new RomanKanaTyping.Typing(data.y);
             wordStartTime = Date.now();
             wordMissCount = 0;
             updateDisplay();
         }
 
         function updateDisplay() {
-            const done = currentRoma.substring(0, charIndex);
-            const current = currentRoma.substring(charIndex, charIndex + 1);
-            const yet = currentRoma.substring(charIndex + 1);
-            
-            romaEl.innerHTML = `<span class="char-done">${done}</span><span class="char-current">${current}</span><span>${yet}</span>`;
+            const solved = typingEngine.getSolvedRoman();
+            const pending = typingEngine.getPendingRoman();
+            const current = pending.charAt(0);
+            const rest = pending.slice(1);
+            romaEl.innerHTML = `<span class="char-done">${solved}</span><span class="char-current">${current}</span><span>${rest}</span>`;
         }
 
         function saveToLibrary(word, time, miss) {
@@ -233,8 +177,7 @@
         }
 
         function endGame() {
-            isPlaying = false;
-            clearInterval(timerId);
+            isPlaying = false; clearInterval(timerId);
             document.getElementById('result-screen').style.display = 'flex';
             document.getElementById('final-score').textContent = score;
         }
