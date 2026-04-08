@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打つだけ。</title>
+    <style>
+        /* 全体のレイアウト */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+            background-color: #f9fbfd; /* ほんのり青みのある白 */
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        /* メインコンテナ */
+        .container {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 24px; /* 角を丸くしてなじみやすく */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            letter-spacing: 0.1em;
+        }
+
+        p {
+            font-size: 1.1rem;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+        }
+
+        /* スタートボタン */
+        .start-button {
+            display: inline-block;
+            padding: 15px 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-decoration: none;
+            color: white;
+            background-color: #3498db;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+            border: none;
+            cursor: pointer;
+        }
+
+        .start-button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+
+        /* 足跡のような装飾 */
+        .footer-text {
+            margin-top: 40px;
+            font-size: 0.9rem;
+            color: #bdc3c7;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>打つだけ。</h1>
+        <p>余計なことは、しません。<br>ただ、キーを叩く時間を楽しむ。</p>
+        
+        <button class="start-button" onclick="location.href='game.html'">はじめる</button>
+    </div>
+
+    <div class="footer-text">
+        Powered by SURGE PRO
+    </div>
+
+</body>
+</html>
