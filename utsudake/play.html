@@ -3,21 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>打つだけ。 | プレイ中</title>
+    <title>打つだけ。 | 本気モード</title>
     <style>
         :root {
             --primary-color: #ff7e5f;
             --secondary-color: #feb47b;
             --bg-color: #fefdfb;
             --text-main: #2c3e50;
-            --text-sub: #bdc3c7;
-            --correct-color: #3498db;
+            --accent: #3498db;
         }
 
         body {
             margin: 0;
-            padding: 0;
-            font-family: "Helvetica Neue", Arial, sans-serif;
+            font-family: "Hiragino Sans", "Meiryo", sans-serif;
             background-color: var(--bg-color);
             display: flex;
             flex-direction: column;
@@ -25,114 +23,191 @@
             justify-content: center;
             height: 100vh;
             overflow: hidden;
-        }
-
-        /* 単語表示エリア */
-        .typing-container {
-            text-align: center;
-            transition: transform 0.1s;
-        }
-
-        #word-display {
-            font-size: 5rem;
-            font-weight: bold;
-            letter-spacing: 0.1em;
             color: var(--text-main);
-            margin-bottom: 20px;
         }
 
-        /* 打った文字の色 */
-        .char-done {
-            color: var(--correct-color);
-            text-shadow: 0 0 10px rgba(52, 152, 219, 0.2);
+        /* ヘッダー情報 */
+        .stats {
+            position: absolute;
+            top: 20px;
+            display: flex;
+            gap: 40px;
+            font-size: 1.2rem;
+            font-weight: bold;
         }
 
-        /* 次に打つ文字のアンダーライン */
-        .char-current {
-            border-bottom: 5px solid var(--primary-color);
+        #timer { color: var(--primary-color); }
+
+        /* メインのタイピングエリア */
+        .game-canvas {
+            width: 800px;
+            height: 300px;
+            background: white;
+            border-radius: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border: 2px solid #eee;
         }
 
-        /* ミスした時の揺れアニメーション */
+        #kanji-display {
+            font-size: 4.5rem;
+            margin-bottom: 10px;
+            letter-spacing: 0.05em;
+        }
+
+        #roma-display {
+            font-size: 2.2rem;
+            color: #bdc3c7;
+            font-weight: bold;
+        }
+
+        .char-done { color: var(--accent); }
+        .char-current { 
+            border-bottom: 4px solid var(--primary-color);
+            color: var(--text-main);
+        }
+
+        /* 演出 */
+        .shake { animation: shake 0.2s; }
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-        .miss-shake {
-            animation: shake 0.2s ease-in-out 2;
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
         }
 
-        /* 戻るボタン（控えめに） */
-        .back-link {
-            position: absolute;
-            top: 30px;
-            left: 30px;
-            text-decoration: none;
-            color: var(--text-sub);
-            font-size: 0.9rem;
-            transition: color 0.3s;
+        /* リザルト画面（最初は隠す） */
+        #result-screen {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(255,255,255,0.95);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
         }
-        .back-link:hover { color: var(--primary-color); }
 
+        .result-score { font-size: 5rem; color: var(--primary-color); font-weight: bold; }
+        
+        .btn-retry {
+            margin-top: 30px;
+            padding: 15px 40px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
 
-    <a href="index.html" class="back-link">← もどる</a>
+    <div class="stats">
+        <div>のこり時間: <span id="timer">60</span>秒</div>
+        <div>スコア: <span id="score">0</span></div>
+    </div>
 
-    <div class="typing-container" id="container">
-        <div id="word-display"></div>
+    <div class="game-canvas" id="canvas">
+        <div id="kanji-display">準備はいい？</div>
+        <div id="roma-display">Press Space to Start</div>
+    </div>
+
+    <div id="result-screen">
+        <h2>お疲れ様でした！</h2>
+        <div class="result-score" id="final-score">0</div>
+        <p>正解タイプ数</p>
+        <button class="btn-retry" onclick="location.reload()">もう一度打つ</button>
     </div>
 
     <script>
-        // 出題する単語リスト（なじみやすい言葉）
-        const words = ['apple', 'orange', 'sky', 'music', 'water', 'smile', 'surge', 'typing', 'coffee', 'cloud'];
-        let currentWord = "";
+        const wordList = [
+            { k: "こんにちは", r: "konnitiwa" },
+            { k: "学校", r: "gakkou" },
+            { k: "文房具", r: "bunbougu" },
+            { k: "プログラミング", r: "puroguraminngu" },
+            { k: "最高速度", r: "saikousokudo" },
+            { k: "新千歳空港", r: "sinnitosekuukou" },
+            { k: "サージプロ", r: "sa-jipuro" },
+            { k: "空飛ぶクルマ", r: "soratobukuruma" }
+        ];
+
+        let score = 0;
+        let timeLeft = 60;
+        let isPlaying = false;
+        let currentWord = {};
         let charIndex = 0;
+        let timerId = null;
 
-        const displayEl = document.getElementById('word-display');
-        const containerEl = document.getElementById('container');
+        const kanjiEl = document.getElementById('kanji-display');
+        const romaEl = document.getElementById('roma-display');
+        const scoreEl = document.getElementById('score');
+        const timerEl = document.getElementById('timer');
+        const canvasEl = document.getElementById('canvas');
 
-        // 新しい単語をセット
+        function startGame() {
+            isPlaying = true;
+            score = 0;
+            timeLeft = 60;
+            nextWord();
+            timerId = setInterval(updateTimer, 1000);
+        }
+
+        function updateTimer() {
+            timeLeft--;
+            timerEl.textContent = timeLeft;
+            if (timeLeft <= 0) {
+                endGame();
+            }
+        }
+
         function nextWord() {
-            currentWord = words[Math.floor(Math.random() * words.length)];
+            currentWord = wordList[Math.floor(Math.random() * wordList.length)];
             charIndex = 0;
             updateDisplay();
         }
 
-        // 表示を更新
         function updateDisplay() {
-            const html = currentWord.split('').map((char, index) => {
-                if (index < charIndex) return `<span class="char-done">${char}</span>`;
-                if (index === charIndex) return `<span class="char-current">${char}</span>`;
-                return `<span>${char}</span>`;
+            kanjiEl.textContent = currentWord.k;
+            const html = currentWord.r.split('').map((c, i) => {
+                if (i < charIndex) return `<span class="char-done">${c}</span>`;
+                if (i === charIndex) return `<span class="char-current">${c}</span>`;
+                return `<span>${c}</span>`;
             }).join('');
-            displayEl.innerHTML = html;
+            romaEl.innerHTML = html;
         }
 
-        // キー入力を監視
-        window.addEventListener('keydown', (e) => {
-            // Shiftキーなどの特殊キーは無視
-            if (e.key.length !== 1) return;
+        function endGame() {
+            isPlaying = false;
+            clearInterval(timerId);
+            document.getElementById('result-screen').style.display = 'flex';
+            document.getElementById('final-score').textContent = score;
+        }
 
-            if (e.key === currentWord[charIndex]) {
-                // 正解
+        window.addEventListener('keydown', e => {
+            if (!isPlaying) {
+                if (e.code === 'Space') startGame();
+                return;
+            }
+
+            if (e.key === currentWord.r[charIndex]) {
                 charIndex++;
-                if (charIndex === currentWord.length) {
+                score++;
+                scoreEl.textContent = score;
+                if (charIndex === currentWord.r.length) {
                     nextWord();
                 } else {
                     updateDisplay();
                 }
             } else {
-                // ミス（揺らす）
-                containerEl.classList.add('miss-shake');
-                setTimeout(() => containerEl.classList.remove('miss-shake'), 200);
+                canvasEl.classList.add('shake');
+                setTimeout(() => canvasEl.classList.remove('shake'), 200);
             }
         });
-
-        // 最初の単語を表示
-        nextWord();
     </script>
-
 </body>
 </html>
