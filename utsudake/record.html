@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>打つだけ。 | 図鑑</title>
+    <style>
+        body {
+            background-color: #fefdfb;
+            font-family: "Hiragino Sans", sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 50px;
+        }
+        h1 { color: #2c3e50; margin-bottom: 40px; }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            height: 150px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 2px solid #eee;
+            transition: 0.3s;
+        }
+
+        /* 未開放のカード */
+        .card.locked {
+            background-color: #f0f0f0;
+            color: #bdc3c7;
+            font-size: 3rem;
+        }
+
+        .card.unlocked {
+            border-color: #feb47b;
+        }
+
+        .word-name { font-weight: bold; font-size: 1.2rem; margin-bottom: 10px; }
+        .stats { font-size: 0.8rem; color: #7f8c8d; }
+
+        .back-link { margin-bottom: 20px; text-decoration: none; color: #ff7e5f; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="back-link">← ホームへもどる</a>
+    <h1>タイピング図鑑</h1>
+    
+    <div class="grid" id="record-grid"></div>
+
+    <script>
+        // play.htmlと同じ単語リスト
+        const wordList = ["新千歳空港", "文房具", "学校", "サージプロ", "プログラミング", "飛行機", "おにぎり", "回転寿司", "最高速度", "キーボード"];
+        
+        // ローカルストレージから記録を読み込む
+        const history = JSON.parse(localStorage.getItem('typing_records') || '{}');
+        const grid = document.getElementById('record-grid');
+
+        wordList.forEach(word => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            if (history[word]) {
+                // 打ったことがある場合
+                card.classList.add('unlocked');
+                card.innerHTML = `
+                    <div class="word-name">${word}</div>
+                    <div class="stats">最速: ${history[word].time}秒</div>
+                    <div class="stats">ミス: ${history[word].miss}回</div>
+                `;
+            } else {
+                // まだ打っていない場合
+                card.classList.add('locked');
+                card.textContent = '?';
+            }
+            grid.appendChild(card);
+        });
+    </script>
+</body>
+</html>
