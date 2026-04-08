@@ -61,7 +61,8 @@
             font-size: 2.2rem;
             color: #bdc3c7;
             font-weight: bold;
-            min-height: 1.2em;
+            font-family: 'Courier New', monospace;
+            min-height: 1.5em;
         }
 
         .char-done { color: var(--accent); }
@@ -99,7 +100,6 @@
             font-size: 1.3rem;
             cursor: pointer;
             text-decoration: none;
-            display: inline-block;
         }
     </style>
 </head>
@@ -107,7 +107,7 @@
 
     <div class="stats">
         <div>のこり時間: <span id="timer">60</span>秒</div>
-        <div>合計タイプ: <span id="score">0</span></div>
+        <div>スコア: <span id="score">0</span></div>
     </div>
 
     <div class="game-canvas" id="canvas">
@@ -119,32 +119,31 @@
         <h2>結果発表</h2>
         <div class="result-score" id="final-score">0</div>
         <p>正解タイプ数</p>
-        <a href="record.html" class="btn-retry">図鑑を見に行く</a>
-        <button class="btn-retry" style="background: #95a5a6;" onclick="location.reload()">もう一度</button>
+        <a href="record.html" class="btn-retry">図鑑を見る</a>
+        <button class="btn-retry" style="background: #ccc;" onclick="location.reload()">もう一度</button>
     </div>
 
-    <script src="https://unpkg.com/roman-kana-typing@1.0.1/dist/bundle.js"></script>
-
     <script>
+        // 単語リスト
         const wordList = [
-            { k: "新千歳空港", y: "しんちとせくうこう" },
-            { k: "文房具", y: "ぶんぼうぐ" },
-            { k: "学校", y: "がっこう" },
-            { k: "サージプロ", y: "さーじぷろ" },
-            { k: "プログラミング", y: "ぷろぐらみんぐ" },
-            { k: "回転寿司", y: "かいてんずし" },
-            { k: "飛行機", y: "ひこうき" },
-            { k: "YouTube", y: "ゆーちゅーぶ" },
-            { k: "開発者", y: "かいはつしゃ" },
-            { k: "最高速度", y: "さいこうそくど" }
+            { k: "学校", r: "gakkou" },
+            { k: "新千歳空港", r: "shinchitosekuukou" },
+            { k: "文房具", r: "bunbougu" },
+            { k: "サージプロ", r: "sa-jipuro" },
+            { k: "プログラミング", r: "puroguramingu" },
+            { k: "回転寿司", r: "kaitenzushi" },
+            { k: "飛行機", r: "hikouki" },
+            { k: "YouTube", r: "yu-tyu-bu" },
+            { k: "最高速度", r: "saikousokudo" }
         ];
 
         let score = 0;
         let timeLeft = 60;
         let isPlaying = false;
         let timerId = null;
-        let currentTyping = null;
-        
+
+        let currentRoma = "";
+        let charIndex = 0;
         let wordStartTime = 0;
         let wordMissCount = 0;
 
@@ -154,9 +153,9 @@
         const timerEl = document.getElementById('timer');
         const canvasEl = document.getElementById('canvas');
 
-        // キー入力を一括管理
+        // キー入力イベント（ここが心臓部です）
         window.addEventListener('keydown', e => {
-            // ゲーム開始前
+            // ゲーム開始判定
             if (!isPlaying) {
                 if (e.code === 'Space') {
                     e.preventDefault();
@@ -165,16 +164,17 @@
                 return;
             }
 
-            // ゲーム中
-            if (e.key === 'Escape') return;
-
-            // ライブラリに入力を渡す
-            const isCorrect = currentTyping.input(e.key);
-
-            if (isCorrect) {
+            // タイピング判定
+            const targetChar = currentRoma[charIndex];
+            
+            if (e.key === targetChar) {
+                // 正解
+                charIndex++;
                 score++;
                 scoreEl.textContent = score;
-                if (currentTyping.isFinished()) {
+                
+                if (charIndex === currentRoma.length) {
+                    // 単語完成
                     const timeTaken = ((Date.now() - wordStartTime) / 1000).toFixed(2);
                     saveToLibrary(kanjiEl.textContent, timeTaken, wordMissCount);
                     nextWord();
@@ -182,7 +182,7 @@
                     updateDisplay();
                 }
             } else {
-                // 特殊キー（Shiftなど）を除外してミス判定
+                // ミス（Shift等は無視）
                 if (e.key.length === 1) {
                     wordMissCount++;
                     canvasEl.classList.add('shake');
@@ -195,44 +195,35 @@
             isPlaying = true;
             score = 0;
             timeLeft = 60;
-            scoreEl.textContent = score;
-            nextWord(); // ここで最初の単語をセット
-            if(timerId) clearInterval(timerId);
-            timerId = setInterval(updateTimer, 1000);
-        }
-
-        function updateTimer() {
-            timeLeft--;
-            timerEl.textContent = timeLeft;
-            if (timeLeft <= 0) endGame();
+            scoreEl.textContent = "0";
+            nextWord();
+            timerId = setInterval(() => {
+                timeLeft--;
+                timerEl.textContent = timeLeft;
+                if (timeLeft <= 0) endGame();
+            }, 1000);
         }
 
         function nextWord() {
             const data = wordList[Math.floor(Math.random() * wordList.length)];
             kanjiEl.textContent = data.k;
-            // タイピングエンジンのインスタンスを作成
-            currentTyping = new RomanKanaTyping.Typing(data.y);
-            
+            currentRoma = data.r;
+            charIndex = 0;
             wordStartTime = Date.now();
             wordMissCount = 0;
-            
             updateDisplay();
         }
 
         function updateDisplay() {
-            const solved = currentTyping.getSolvedRoman();
-            const pending = currentTyping.getPendingRoman();
+            const done = currentRoma.substring(0, charIndex);
+            const current = currentRoma.substring(charIndex, charIndex + 1);
+            const yet = currentRoma.substring(charIndex + 1);
             
-            // 1文字目だけ強調
-            const first = pending.charAt(0);
-            const rest = pending.slice(1);
-            
-            romaEl.innerHTML = `<span class="char-done">${solved}</span><span class="char-current">${first}</span><span>${rest}</span>`;
+            romaEl.innerHTML = `<span class="char-done">${done}</span><span class="char-current">${current}</span><span>${yet}</span>`;
         }
 
         function saveToLibrary(word, time, miss) {
             let history = JSON.parse(localStorage.getItem('typing_records') || '{}');
-            // 初めての記録、またはタイムが更新された場合に保存
             if (!history[word] || parseFloat(time) < parseFloat(history[word].time)) {
                 history[word] = { time: time, miss: miss };
             }
