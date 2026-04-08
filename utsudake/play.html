@@ -84,9 +84,9 @@
         <div id="roma-display">Spaceキーでスタート</div>
     </div>
 
-    <div class="ad-container">
-        <a href="//af.moshimo.com/af/c/click?a_id=5472665&p_id=54&pc_id=54&pl_id=1251" rel="nofollow" referrerpolicy="no-referrer-when-downgrade" attributionsrc><img src="//image.moshimo.com/af-img/0032/000000001251.gif" width="468" height="60" style="border:none;"></a><img src="//i.moshimo.com/af/i/impression?a_id=5472665&p_id=54&pc_id=54&pl_id=1251" width="1" height="1" style="border:none;" loading="lazy">
-    </div>
+<div class="ad-container" id="ad-slot">
+    <h2>PR</h2>
+        </div>
 
     <div id="result-screen">
         <div class="result-card">
@@ -306,6 +306,23 @@
             document.getElementById('result-screen').style.display = 'flex';
             document.getElementById('final-score').textContent = score;
         }
+    </script>
+    <script>
+        const adList = [
+            '<a href="//af.moshimo.com/af/c/click?a_id=5472673&p_id=1225&pc_id=1925&pl_id=19144" rel="nofollow" referrerpolicy="no-referrer-when-downgrade" attributionsrc><img src="//image.moshimo.com/af-img/0349/000000019144.jpg" width="468" height="60" style="border:none;"></a><img src="//i.moshimo.com/af/i/impression?a_id=5472673&p_id=1225&pc_id=1925&pl_id=19144" width="1" height="1" style="border:none;" loading="lazy">',
+            '<a href="//af.moshimo.com/af/c/click?a_id=5472665&p_id=54&pc_id=54&pl_id=1251" rel="nofollow" referrerpolicy="no-referrer-when-downgrade" attributionsrc><img src="//image.moshimo.com/af-img/0032/000000001251.gif" width="468" height="60" style="border:none;"></a><img src="//i.moshimo.com/af/i/impression?a_id=5472665&p_id=54&pc_id=54&pl_id=1251" width="1" height="1" style="border:none;" loading="lazy">',
+            <a href="//af.moshimo.com/af/c/click?a_id=5472673&p_id=1225&pc_id=1925&pl_id=18544" rel="nofollow" referrerpolicy="no-referrer-when-downgrade" attributionsrc><img src="//image.moshimo.com/af-img/0349/000000018544.gif" width="468" height="60" style="border:none;"></a><img src="//i.moshimo.com/af/i/impression?a_id=5472673&p_id=1225&pc_id=1925&pl_id=18544" width="1" height="1" style="border:none;" loading="lazy">,
+            <a href="//af.moshimo.com/af/c/click?a_id=5472682&p_id=5941&pc_id=16548&pl_id=75907" rel="nofollow" referrerpolicy="no-referrer-when-downgrade" attributionsrc><img src="//image.moshimo.com/af-img/5687/000000075907.jpg" width="728" height="90" style="border:none;"></a><img src="//i.moshimo.com/af/i/impression?a_id=5472682&p_id=5941&pc_id=16548&pl_id=75907" width="1" height="1" style="border:none;" loading="lazy">
+        ];
+
+        // ランダムに1つ選んで表示する関数
+        function showRandomAd() {
+            const randomIndex = Math.floor(Math.random() * adList.length);
+            document.getElementById('ad-slot').innerHTML = adList[randomIndex];
+        }
+
+        // ページ読み込み時に実行
+        showRandomAd();
     </script>
 </body>
 </html>
