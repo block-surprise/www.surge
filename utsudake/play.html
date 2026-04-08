@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>打つだけ。 | 完全版</title>
+    <title>打つだけ。 | プレイ画面</title>
     <style>
         :root {
             --primary-color: #ff7e5f;
@@ -26,7 +26,7 @@
             color: var(--text-main);
         }
 
-        /* ヘッダー情報 */
+        /* 統計情報 */
         .stats {
             position: absolute;
             top: 20px;
@@ -38,10 +38,10 @@
 
         #timer { color: var(--primary-color); }
 
-        /* ゲームエリア */
+        /* ゲームキャンバス */
         .game-canvas {
             width: 850px;
-            height: 350px;
+            height: 380px;
             background: white;
             border-radius: 40px;
             box-shadow: 0 15px 50px rgba(0,0,0,0.05);
@@ -63,7 +63,7 @@
             font-size: 2.2rem;
             color: #bdc3c7;
             font-weight: bold;
-            letter-spacing: 0.05em;
+            font-family: 'Courier New', Courier, monospace;
         }
 
         .char-done { color: var(--accent); }
@@ -72,12 +72,12 @@
             color: var(--text-main);
         }
 
-        /* 演出アニメーション */
+        /* 演出 */
         .shake { animation: shake 0.2s; }
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-8px); }
-            75% { transform: translateX(8px); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
         }
 
         #result-screen {
@@ -92,7 +92,6 @@
         }
 
         .result-score { font-size: 6rem; color: var(--primary-color); font-weight: bold; }
-        
         .btn-retry {
             margin-top: 40px;
             padding: 18px 60px;
@@ -101,9 +100,7 @@
             border: none;
             border-radius: 50px;
             font-size: 1.3rem;
-            font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 10px 20px rgba(255, 126, 95, 0.3);
         }
     </style>
 </head>
@@ -111,7 +108,7 @@
 
     <div class="stats">
         <div>のこり時間: <span id="timer">60</span>秒</div>
-        <div>スコア: <span id="score">0</span></div>
+        <div>合計タイプ: <span id="score">0</span></div>
     </div>
 
     <div class="game-canvas" id="canvas">
@@ -123,41 +120,35 @@
         <h2>結果発表</h2>
         <div class="result-score" id="final-score">0</div>
         <p>正解タイプ数</p>
-        <button class="btn-retry" onclick="location.reload()">もう一度挑戦する</button>
+        <button class="btn-retry" onclick="location.href='record.html'">図鑑を見に行く</button>
+        <button class="btn-retry" style="background: #95a5a6;" onclick="location.reload()">もう一度</button>
     </div>
 
     <script src="https://unpkg.com/roman-kana-typing@1.0.1/dist/bundle.js"></script>
 
     <script>
-        // 大量の単語データ
         const wordList = [
             { k: "新千歳空港", y: "しんちとせくうこう" },
             { k: "文房具", y: "ぶんぼうぐ" },
             { k: "学校", y: "がっこう" },
             { k: "サージプロ", y: "さーじぷろ" },
             { k: "プログラミング", y: "ぷろぐらみんぐ" },
-            { k: "飛行機", y: "ひこうき" },
-            { k: "おにぎり", y: "おにぎり" },
             { k: "回転寿司", y: "かいてんずし" },
-            { k: "最高速度", y: "さいこうそくど" },
-            { k: "キーボード", y: "きーぼーど" },
+            { k: "飛行機", y: "ひこうき" },
             { k: "YouTube", y: "ゆーちゅーぶ" },
-            { k: "ウェブサイト", y: "うぇぶさいと" },
-            { k: "中学生", y: "ちゅうがくせい" },
-            { k: "滑走路", y: "かっそうろ" },
-            { k: "夏休み", y: "なつやすみ" },
-            { k: "青空", y: "あおぞら" },
-            { k: "お茶漬け", y: "おちゃづけ" },
             { k: "開発者", y: "かいはつしゃ" },
-            { k: "深呼吸", y: "しんこきゅう" },
-            { k: "流れ星", y: "ながれぼし" }
+            { k: "最高速度", y: "さいこうそくど" }
         ];
 
         let score = 0;
         let timeLeft = 60;
         let isPlaying = false;
         let timerId = null;
-        let currentTyping = null; // ローマ字判定エンジン
+        let currentTyping = null;
+        
+        // 単語ごとの計測用
+        let wordStartTime = 0;
+        let wordMissCount = 0;
 
         const kanjiEl = document.getElementById('kanji-display');
         const romaEl = document.getElementById('roma-display');
@@ -165,11 +156,21 @@
         const timerEl = document.getElementById('timer');
         const canvasEl = document.getElementById('canvas');
 
+        // スペースキーで開始する処理を確実に
+        window.addEventListener('keydown', e => {
+            if (!isPlaying && e.code === 'Space') {
+                e.preventDefault(); // スクロール防止
+                startGame();
+            }
+        });
+
         function startGame() {
             isPlaying = true;
             score = 0;
             timeLeft = 60;
+            scoreEl.textContent = score;
             nextWord();
+            if(timerId) clearInterval(timerId);
             timerId = setInterval(updateTimer, 1000);
         }
 
@@ -182,18 +183,28 @@
         function nextWord() {
             const data = wordList[Math.floor(Math.random() * wordList.length)];
             kanjiEl.textContent = data.k;
-            // ライブラリを使用して複数入力に対応した判定エンジンを生成
             currentTyping = new RomanKanaTyping.Typing(data.y);
+            
+            // 計測リセット
+            wordStartTime = Date.now();
+            wordMissCount = 0;
+            
             updateDisplay();
         }
 
         function updateDisplay() {
-            // 正解済みの部分と、これからの部分を取得
             const solved = currentTyping.getSolvedRoman();
             const pending = currentTyping.getPendingRoman();
-            
-            // 画面表示を更新
             romaEl.innerHTML = `<span class="char-done">${solved}</span><span class="char-current">${pending.charAt(0)}</span><span>${pending.slice(1)}</span>`;
+        }
+
+        // 図鑑にデータを保存する
+        function saveToLibrary(word, time, miss) {
+            let history = JSON.parse(localStorage.getItem('typing_records') || '{}');
+            if (!history[word] || time < history[word].time) {
+                history[word] = { time: time, miss: miss };
+            }
+            localStorage.setItem('typing_records', JSON.stringify(history));
         }
 
         function endGame() {
@@ -204,24 +215,23 @@
         }
 
         window.addEventListener('keydown', e => {
-            if (!isPlaying) {
-                if (e.code === 'Space') startGame();
-                return;
-            }
+            if (!isPlaying) return;
+            if (e.key === 'Escape') return; // Escなどは無視
 
-            // キー入力判定
             if (currentTyping.input(e.key)) {
-                // 正解
                 score++;
                 scoreEl.textContent = score;
                 if (currentTyping.isFinished()) {
+                    // 単語完成時のタイム計算
+                    const timeTaken = ((Date.now() - wordStartTime) / 1000).toFixed(2);
+                    saveToLibrary(kanjiEl.textContent, timeTaken, wordMissCount);
                     nextWord();
                 } else {
                     updateDisplay();
                 }
             } else {
-                // ミス
-                if(e.key !== "Shift") { // Shiftキーでのミス判定を防ぐ
+                if (!["Shift", "Control", "Alt", "Meta"].includes(e.key)) {
+                    wordMissCount++;
                     canvasEl.classList.add('shake');
                     setTimeout(() => canvasEl.classList.remove('shake'), 200);
                 }
