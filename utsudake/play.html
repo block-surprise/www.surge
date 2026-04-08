@@ -80,13 +80,13 @@
 
     <div class="game-canvas" id="canvas">
         <div id="combo-display">0 COMBO!</div>
-        <div id="kanji-display">準備はいい？</div>
-        <div id="roma-display">Spaceキーでスタート</div>
+        <div id="kanji-display">読み込み中...</div>
+        <div id="roma-display">少々お待ちください</div>
     </div>
 
     <div class="ad-container">
         <script src="https://adm.shinobi.jp/s/3fca9fb2dfe3e7a1176425f21d3e9ab7"></script>
-    </div>
+        </div>
 
     <div id="result-screen">
         <div class="result-card">
@@ -103,7 +103,6 @@
     <script src="https://cdn.jsdelivr.net/npm/roman-kana-typing@1.0.1/dist/bundle.js"></script>
 
     <script>
-        // 【重要】読み仮名を「ひらがなのみ」に修正しました（ー はそのままでOKですが、形式を統一）
         const wordList = [
             { k: "新千歳空港", y: "しんちとせくうこう" },
             { k: "文房具", y: "ぶんぼうぐ" },
@@ -129,6 +128,15 @@
         const canvasEl = document.getElementById('canvas');
         const comboEl = document.getElementById('combo-display');
 
+        // ライブラリの読み込みを監視
+        const checkLibrary = setInterval(() => {
+            if (typeof RomanKanaTyping !== 'undefined') {
+                kanjiEl.textContent = "準備はいい？";
+                romaEl.textContent = "Spaceキーでスタート";
+                clearInterval(checkLibrary);
+            }
+        }, 100);
+
         window.addEventListener('keydown', e => {
             if (typeof RomanKanaTyping === 'undefined') return;
 
@@ -140,7 +148,6 @@
                 return;
             }
 
-            // タイピング判定
             const isCorrect = typingEngine.input(e.key);
             if (isCorrect) {
                 score++;
@@ -185,8 +192,15 @@
         function nextWord() {
             const data = wordList[Math.floor(Math.random() * wordList.length)];
             kanjiEl.textContent = data.k;
-            // 念のため読み仮名から不要な空白を削除してエンジンを作成
-            typingEngine = new RomanKanaTyping.Typing(data.y.trim());
+            // 内部エンジンの作成に失敗しないようエラーハンドリング追加
+            try {
+                typingEngine = new RomanKanaTyping.Typing(data.y);
+            } catch (e) {
+                console.error("Engine Error:", e);
+                // 失敗した場合はもう一度別の単語で試行
+                nextWord();
+                return;
+            }
             wordStartTime = Date.now();
             wordMissCount = 0;
             updateDisplay();
