@@ -80,13 +80,13 @@
 
     <div class="game-canvas" id="canvas">
         <div id="combo-display">0 COMBO!</div>
-        <div id="kanji-display">読み込み中...</div>
-        <div id="roma-display">少々お待ちください</div>
+        <div id="kanji-display">準備はいい？</div>
+        <div id="roma-display">Spaceキーでスタート</div>
     </div>
 
     <div class="ad-container">
         <script src="https://adm.shinobi.jp/s/3fca9fb2dfe3e7a1176425f21d3e9ab7"></script>
-        </div>
+    </div>
 
     <div id="result-screen">
         <div class="result-card">
@@ -100,9 +100,27 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/roman-kana-typing@1.0.1/dist/bundle.js"></script>
-
     <script>
+        // ローマ字変換表（外部ライブラリを使わないための自作エンジン）
+        const romanMap = {
+            'あ':['a'],'い':['i'],'う':['u'],'え':['e'],'お':['o'],
+            'か':['ka'],'き':['ki'],'く':['ku'],'け':['ke'],'こ':['ko'],
+            'さ':['sa'],'し':['si','shi'],'す':['su'],'せ':['se'],'そ':['so'],
+            'た':['ta'],'ち':['ti','chi'],'つ':['tu','tsu'],'て':['te'],'と':['to'],
+            'な':['na'],'に':['ni'],'ぬ':['nu'],'ね':['ne'],'の':['no'],
+            'は':['ha'],'ひ':['hi'],'ふ':['fu','hu'],'へ':['he'],'ほ':['ho'],
+            'ま':['ma'],'み':['mi'],'む':['mu'],'め':['me'],'も':['mo'],
+            'や':['ya'],'ゆ':['yu'],'よ':['yo'],
+            'ら':['ra'],'り':['ri'],'る':['ru'],'れ':['re'],'ろ':['ro'],
+            'わ':['wa'],'を':['wo'],'ん':['nn'],
+            'が':['ga'],'ぎ':['gi'],'ぐ':['gu'],'げ':['ge'],'ご':['go'],
+            'ざ':['za'],'じ':['zi','ji'],'ず':['zu'],'ぜ':['ze'],'ぞ':['zo'],
+            'だ':['da'],'ぢ':['di'],'づ':['du'],'で':['de'],'ど':['do'],
+            'ば':['ba'],'び':['bi'],'ぶ':['bu'],'べ':['be'],'ぼ':['bo'],
+            'ぱ':['pa'],'ぴ':['pi'],'ぷ':['pu'],'ぺ':['pe'],'ぽ':['po'],
+            'っ':['xtu','xtsu'], 'ー':['-']
+        };
+
         const wordList = [
             { k: "新千歳空港", y: "しんちとせくうこう" },
             { k: "文房具", y: "ぶんぼうぐ" },
@@ -117,7 +135,8 @@
         ];
 
         let score = 0, totalMiss = 0, combo = 0, timeLeft = 60;
-        let isPlaying = false, timerId = null, typingEngine = null;
+        let isPlaying = false, timerId = null;
+        let currentTarget = "", currentSolved = "", currentPending = "";
         let wordStartTime = 0, wordMissCount = 0;
 
         const kanjiEl = document.getElementById('kanji-display');
@@ -128,18 +147,24 @@
         const canvasEl = document.getElementById('canvas');
         const comboEl = document.getElementById('combo-display');
 
-        // ライブラリの読み込みを監視
-        const checkLibrary = setInterval(() => {
-            if (typeof RomanKanaTyping !== 'undefined') {
-                kanjiEl.textContent = "準備はいい？";
-                romaEl.textContent = "Spaceキーでスタート";
-                clearInterval(checkLibrary);
+        // シンプルなローマ字変換器
+        function convertToRoma(kana) {
+            let roma = "";
+            for(let i=0; i<kana.length; i++) {
+                let char = kana[i];
+                if(char === 'っ') {
+                    let next = kana[i+1];
+                    if(next && romanMap[next]) {
+                        roma += romanMap[next][0][0];
+                        continue;
+                    }
+                }
+                roma += romanMap[char] ? romanMap[char][0] : char;
             }
-        }, 100);
+            return roma;
+        }
 
         window.addEventListener('keydown', e => {
-            if (typeof RomanKanaTyping === 'undefined') return;
-
             if (!isPlaying) {
                 if (e.code === 'Space') {
                     e.preventDefault();
@@ -148,16 +173,20 @@
                 return;
             }
 
-            const isCorrect = typingEngine.input(e.key);
-            if (isCorrect) {
+            if (e.key === currentPending[0]) {
+                // 正解
+                currentSolved += e.key;
+                currentPending = currentPending.slice(1);
                 score++;
                 combo++;
                 scoreEl.textContent = score;
+                
                 if (combo >= 5) {
                     comboEl.textContent = `${combo} COMBO!`;
                     comboEl.classList.add('show');
                 }
-                if (typingEngine.isFinished()) {
+
+                if (currentPending.length === 0) {
                     const timeTaken = ((Date.now() - wordStartTime) / 1000).toFixed(2);
                     saveToLibrary(kanjiEl.textContent, timeTaken, wordMissCount);
                     nextWord();
@@ -165,6 +194,7 @@
                     updateDisplay();
                 }
             } else {
+                // ミス (Shiftなどは除外)
                 if (e.key.length !== 1 || e.key === " ") return;
                 totalMiss++;
                 wordMissCount++;
@@ -192,25 +222,15 @@
         function nextWord() {
             const data = wordList[Math.floor(Math.random() * wordList.length)];
             kanjiEl.textContent = data.k;
-            // 内部エンジンの作成に失敗しないようエラーハンドリング追加
-            try {
-                typingEngine = new RomanKanaTyping.Typing(data.y);
-            } catch (e) {
-                console.error("Engine Error:", e);
-                // 失敗した場合はもう一度別の単語で試行
-                nextWord();
-                return;
-            }
+            currentSolved = "";
+            currentPending = convertToRoma(data.y);
             wordStartTime = Date.now();
             wordMissCount = 0;
             updateDisplay();
         }
 
         function updateDisplay() {
-            const solved = typingEngine.getSolvedRoman();
-            const pending = typingEngine.getPendingRoman();
-            if (!pending) return;
-            romaEl.innerHTML = `<span class="char-done">${solved}</span><span class="char-current">${pending.charAt(0)}</span><span>${pending.slice(1)}</span>`;
+            romaEl.innerHTML = `<span class="char-done">${currentSolved}</span><span class="char-current">${currentPending.charAt(0)}</span><span>${currentPending.slice(1)}</span>`;
         }
 
         function saveToLibrary(word, time, miss) {
@@ -222,7 +242,8 @@
         }
 
         function endGame() {
-            isPlaying = false; clearInterval(timerId);
+            isPlaying = false;
+            clearInterval(timerId);
             document.getElementById('result-screen').style.display = 'flex';
             document.getElementById('final-score').textContent = score;
         }
