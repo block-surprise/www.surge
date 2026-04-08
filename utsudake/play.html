@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打つだけ。 | プレイ中</title>
+    <style>
+        :root {
+            --primary-color: #ff7e5f;
+            --secondary-color: #feb47b;
+            --bg-color: #fefdfb;
+            --text-main: #2c3e50;
+            --text-sub: #bdc3c7;
+            --correct-color: #3498db;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 単語表示エリア */
+        .typing-container {
+            text-align: center;
+            transition: transform 0.1s;
+        }
+
+        #word-display {
+            font-size: 5rem;
+            font-weight: bold;
+            letter-spacing: 0.1em;
+            color: var(--text-main);
+            margin-bottom: 20px;
+        }
+
+        /* 打った文字の色 */
+        .char-done {
+            color: var(--correct-color);
+            text-shadow: 0 0 10px rgba(52, 152, 219, 0.2);
+        }
+
+        /* 次に打つ文字のアンダーライン */
+        .char-current {
+            border-bottom: 5px solid var(--primary-color);
+        }
+
+        /* ミスした時の揺れアニメーション */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .miss-shake {
+            animation: shake 0.2s ease-in-out 2;
+        }
+
+        /* 戻るボタン（控えめに） */
+        .back-link {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            text-decoration: none;
+            color: var(--text-sub);
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+        .back-link:hover { color: var(--primary-color); }
+
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="back-link">← もどる</a>
+
+    <div class="typing-container" id="container">
+        <div id="word-display"></div>
+    </div>
+
+    <script>
+        // 出題する単語リスト（なじみやすい言葉）
+        const words = ['apple', 'orange', 'sky', 'music', 'water', 'smile', 'surge', 'typing', 'coffee', 'cloud'];
+        let currentWord = "";
+        let charIndex = 0;
+
+        const displayEl = document.getElementById('word-display');
+        const containerEl = document.getElementById('container');
+
+        // 新しい単語をセット
+        function nextWord() {
+            currentWord = words[Math.floor(Math.random() * words.length)];
+            charIndex = 0;
+            updateDisplay();
+        }
+
+        // 表示を更新
+        function updateDisplay() {
+            const html = currentWord.split('').map((char, index) => {
+                if (index < charIndex) return `<span class="char-done">${char}</span>`;
+                if (index === charIndex) return `<span class="char-current">${char}</span>`;
+                return `<span>${char}</span>`;
+            }).join('');
+            displayEl.innerHTML = html;
+        }
+
+        // キー入力を監視
+        window.addEventListener('keydown', (e) => {
+            // Shiftキーなどの特殊キーは無視
+            if (e.key.length !== 1) return;
+
+            if (e.key === currentWord[charIndex]) {
+                // 正解
+                charIndex++;
+                if (charIndex === currentWord.length) {
+                    nextWord();
+                } else {
+                    updateDisplay();
+                }
+            } else {
+                // ミス（揺らす）
+                containerEl.classList.add('miss-shake');
+                setTimeout(() => containerEl.classList.remove('miss-shake'), 200);
+            }
+        });
+
+        // 最初の単語を表示
+        nextWord();
+    </script>
+
+</body>
+</html>
