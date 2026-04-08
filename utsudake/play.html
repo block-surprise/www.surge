@@ -26,7 +26,6 @@
             color: var(--text-main);
         }
 
-        /* 統計情報 */
         .stats {
             position: absolute;
             top: 20px;
@@ -38,7 +37,6 @@
 
         #timer { color: var(--primary-color); }
 
-        /* ゲームキャンバス */
         .game-canvas {
             width: 850px;
             height: 380px;
@@ -63,7 +61,7 @@
             font-size: 2.2rem;
             color: #bdc3c7;
             font-weight: bold;
-            font-family: 'Courier New', Courier, monospace;
+            min-height: 1.2em;
         }
 
         .char-done { color: var(--accent); }
@@ -72,7 +70,6 @@
             color: var(--text-main);
         }
 
-        /* 演出 */
         .shake { animation: shake 0.2s; }
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
@@ -93,7 +90,7 @@
 
         .result-score { font-size: 6rem; color: var(--primary-color); font-weight: bold; }
         .btn-retry {
-            margin-top: 40px;
+            margin: 10px;
             padding: 18px 60px;
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             color: white;
@@ -101,6 +98,8 @@
             border-radius: 50px;
             font-size: 1.3rem;
             cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
         }
     </style>
 </head>
@@ -120,7 +119,7 @@
         <h2>結果発表</h2>
         <div class="result-score" id="final-score">0</div>
         <p>正解タイプ数</p>
-        <button class="btn-retry" onclick="location.href='record.html'">図鑑を見に行く</button>
+        <a href="record.html" class="btn-retry">図鑑を見に行く</a>
         <button class="btn-retry" style="background: #95a5a6;" onclick="location.reload()">もう一度</button>
     </div>
 
@@ -146,7 +145,6 @@
         let timerId = null;
         let currentTyping = null;
         
-        // 単語ごとの計測用
         let wordStartTime = 0;
         let wordMissCount = 0;
 
@@ -156,11 +154,40 @@
         const timerEl = document.getElementById('timer');
         const canvasEl = document.getElementById('canvas');
 
-        // スペースキーで開始する処理を確実に
+        // キー入力を一括管理
         window.addEventListener('keydown', e => {
-            if (!isPlaying && e.code === 'Space') {
-                e.preventDefault(); // スクロール防止
-                startGame();
+            // ゲーム開始前
+            if (!isPlaying) {
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    startGame();
+                }
+                return;
+            }
+
+            // ゲーム中
+            if (e.key === 'Escape') return;
+
+            // ライブラリに入力を渡す
+            const isCorrect = currentTyping.input(e.key);
+
+            if (isCorrect) {
+                score++;
+                scoreEl.textContent = score;
+                if (currentTyping.isFinished()) {
+                    const timeTaken = ((Date.now() - wordStartTime) / 1000).toFixed(2);
+                    saveToLibrary(kanjiEl.textContent, timeTaken, wordMissCount);
+                    nextWord();
+                } else {
+                    updateDisplay();
+                }
+            } else {
+                // 特殊キー（Shiftなど）を除外してミス判定
+                if (e.key.length === 1) {
+                    wordMissCount++;
+                    canvasEl.classList.add('shake');
+                    setTimeout(() => canvasEl.classList.remove('shake'), 200);
+                }
             }
         });
 
@@ -169,7 +196,7 @@
             score = 0;
             timeLeft = 60;
             scoreEl.textContent = score;
-            nextWord();
+            nextWord(); // ここで最初の単語をセット
             if(timerId) clearInterval(timerId);
             timerId = setInterval(updateTimer, 1000);
         }
@@ -183,9 +210,9 @@
         function nextWord() {
             const data = wordList[Math.floor(Math.random() * wordList.length)];
             kanjiEl.textContent = data.k;
+            // タイピングエンジンのインスタンスを作成
             currentTyping = new RomanKanaTyping.Typing(data.y);
             
-            // 計測リセット
             wordStartTime = Date.now();
             wordMissCount = 0;
             
@@ -195,13 +222,18 @@
         function updateDisplay() {
             const solved = currentTyping.getSolvedRoman();
             const pending = currentTyping.getPendingRoman();
-            romaEl.innerHTML = `<span class="char-done">${solved}</span><span class="char-current">${pending.charAt(0)}</span><span>${pending.slice(1)}</span>`;
+            
+            // 1文字目だけ強調
+            const first = pending.charAt(0);
+            const rest = pending.slice(1);
+            
+            romaEl.innerHTML = `<span class="char-done">${solved}</span><span class="char-current">${first}</span><span>${rest}</span>`;
         }
 
-        // 図鑑にデータを保存する
         function saveToLibrary(word, time, miss) {
             let history = JSON.parse(localStorage.getItem('typing_records') || '{}');
-            if (!history[word] || time < history[word].time) {
+            // 初めての記録、またはタイムが更新された場合に保存
+            if (!history[word] || parseFloat(time) < parseFloat(history[word].time)) {
                 history[word] = { time: time, miss: miss };
             }
             localStorage.setItem('typing_records', JSON.stringify(history));
@@ -213,30 +245,6 @@
             document.getElementById('result-screen').style.display = 'flex';
             document.getElementById('final-score').textContent = score;
         }
-
-        window.addEventListener('keydown', e => {
-            if (!isPlaying) return;
-            if (e.key === 'Escape') return; // Escなどは無視
-
-            if (currentTyping.input(e.key)) {
-                score++;
-                scoreEl.textContent = score;
-                if (currentTyping.isFinished()) {
-                    // 単語完成時のタイム計算
-                    const timeTaken = ((Date.now() - wordStartTime) / 1000).toFixed(2);
-                    saveToLibrary(kanjiEl.textContent, timeTaken, wordMissCount);
-                    nextWord();
-                } else {
-                    updateDisplay();
-                }
-            } else {
-                if (!["Shift", "Control", "Alt", "Meta"].includes(e.key)) {
-                    wordMissCount++;
-                    canvasEl.classList.add('shake');
-                    setTimeout(() => canvasEl.classList.remove('shake'), 200);
-                }
-            }
-        });
     </script>
 </body>
 </html>
