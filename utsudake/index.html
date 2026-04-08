@@ -3,83 +3,180 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>打つだけ。</title>
+    <title>打つだけ。 | 日々のタイピングに、心地よさを。</title>
     <style>
-        /* 全体のレイアウト */
+        /* --- リセット & 基本設定 --- */
+        :root {
+            --primary-color: #ff7e5f; /* 暖かみのあるオレンジ */
+            --secondary-color: #feb47b;
+            --text-color: #4a4a4a;
+            --bg-color: #fefdfb; /* ほんのりクリーム色の白 */
+        }
+
         body {
             margin: 0;
             padding: 0;
             font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
-            background-color: #f9fbfd; /* ほんのり青みのある白 */
-            color: #333;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
+            overflow: hidden; /* 背景アニメーションのため */
+            position: relative;
         }
 
-        /* メインコンテナ */
+        /* --- 背景の柔らかな装飾 --- */
+        .bg-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            filter: blur(80px); /* ぼかして柔らかく */
+            opacity: 0.15;
+            z-index: -1;
+        }
+        .circle-1 { width: 400px; height: 400px; top: -100px; left: -100px; }
+        .circle-2 { width: 300px; height: 300px; bottom: -50px; right: -50px; }
+
+        /* --- メインコンテナ --- */
         .container {
             text-align: center;
-            padding: 40px;
-            background: white;
-            border-radius: 24px; /* 角を丸くしてなじみやすく */
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-            max-width: 400px;
+            padding: 60px 40px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 32px; /* さらに丸く */
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.03);
+            max-width: 500px;
             width: 90%;
+            backdrop-filter: blur(10px); /* すりガラス効果 */
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        /* --- タイトルエリア --- */
+        .logo-area {
+            margin-bottom: 40px;
         }
 
         h1 {
-            font-size: 3rem;
-            margin-bottom: 10px;
+            font-size: 3.5rem;
+            margin: 0;
             color: #2c3e50;
-            letter-spacing: 0.1em;
+            letter-spacing: 0.15em;
+            position: relative;
+            display: inline-block;
+        }
+        
+        /* タイトルの下のアクセント */
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 10%;
+            width: 80%;
+            height: 4px;
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            border-radius: 2px;
         }
 
-        p {
-            font-size: 1.1rem;
+        p.subtitle {
+            font-size: 1.2rem;
             color: #7f8c8d;
-            margin-bottom: 30px;
+            margin: 15px 0 0;
+            font-weight: 300;
         }
 
-        /* スタートボタン */
+        /* --- ガイドエリア --- */
+        .guide-area {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 50px;
+            gap: 15px;
+        }
+
+        .guide-item {
+            flex: 1;
+            padding: 15px;
+            background-color: #f9fbfd;
+            border-radius: 16px;
+            border: 1px solid #eee;
+        }
+
+        .guide-icon {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .guide-text {
+            font-size: 0.9rem;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        /* --- スタートボタン --- */
         .start-button {
             display: inline-block;
-            padding: 15px 50px;
-            font-size: 1.2rem;
+            padding: 18px 60px;
+            font-size: 1.3rem;
             font-weight: bold;
             text-decoration: none;
             color: white;
-            background-color: #3498db;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             border-radius: 50px;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+            box-shadow: 0 8px 25px rgba(255, 126, 95, 0.3);
             border: none;
             cursor: pointer;
+            letter-spacing: 0.1em;
         }
 
         .start-button:hover {
-            background-color: #2980b9;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 12px 30px rgba(255, 126, 95, 0.4);
+        }
+        
+        .start-button:active {
+            transform: translateY(-1px);
         }
 
-        /* 足跡のような装飾 */
+        /* --- フッター --- */
         .footer-text {
-            margin-top: 40px;
-            font-size: 0.9rem;
+            position: absolute;
+            bottom: 20px;
+            font-size: 0.85rem;
             color: #bdc3c7;
+            letter-spacing: 0.05em;
         }
     </style>
 </head>
 <body>
 
+    <div class="bg-circle circle-1"></div>
+    <div class="bg-circle circle-2"></div>
+
     <div class="container">
-        <h1>打つだけ。</h1>
-        <p>余計なことは、しません。<br>ただ、キーを叩く時間を楽しむ。</p>
+        <div class="logo-area">
+            <h1>打つだけ。</h1>
+            <p class="subtitle">日々のタイピングに、心地よさを。</p>
+        </div>
+
+        <div class="guide-area">
+            <div class="guide-item">
+                <span class="guide-icon">👀</span>
+                <span class="guide-text">文字を<br>見て</span>
+            </div>
+            <div class="guide-item">
+                <span class="guide-icon">⌨️</span>
+                <span class="guide-text">キーを<br>打って</span>
+            </div>
+            <div class="guide-item">
+                <span class="guide-icon">✨</span>
+                <span class="guide-text">スッキリ<br>する</span>
+            </div>
+        </div>
         
-        <button class="start-button" onclick="location.href='game.html'">はじめる</button>
+        <button class="start-button" onclick="location.href='game.html'">体験をはじめる</button>
     </div>
 
     <div class="footer-text">
