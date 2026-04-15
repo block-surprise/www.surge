@@ -70,7 +70,7 @@
         }
 
         h1 { font-size: 3rem; margin: 0; font-weight: 200; letter-spacing: 0.2em; transition: 0.3s; }
-        #mode-title { font-weight: bold; color: var(--primary-color); display: block; font-size: 1.5rem; margin-top: 10px; }
+        #mode-title { font-weight: bold; color: var(--primary-color); display: block; font-size: 1.5rem; margin-top: 10px; min-height: 1.8rem; }
         .subtitle { font-size: 0.9rem; color: #999; margin-bottom: 50px; }
 
         .menu-grid { display: flex; flex-direction: column; gap: 15px; }
@@ -81,6 +81,7 @@
         .btn-play { background: var(--text-main); color: white; border: none; }
         .btn-play:hover { background: #555; transform: translateY(-2px); }
         .btn-record { background: white; color: var(--text-main); }
+        .btn-record:hover { background: #f9f9f9; border-color: #ddd; transform: translateY(-2px); }
 
         .footer { margin-top: 40px; font-size: 0.8rem; color: #ccc; }
     </style>
@@ -105,7 +106,7 @@
 
         <div class="menu-grid">
             <a href="play.html" id="start-button" class="menu-button btn-play">タイピングを始める</a>
-            <a href="record.html" class="menu-button btn-record">図鑑・記録を確認</a>
+            <a href="record.html" id="record-button" class="menu-button btn-record">図鑑・記録を確認</a>
         </div>
 
         <div class="footer">SURGE PRO</div>
@@ -117,13 +118,14 @@
         const overlay = document.getElementById('overlay');
         const title = document.getElementById('mode-title');
         const startBtn = document.getElementById('start-button');
+        const recordBtn = document.getElementById('record-button');
 
-        // モード設定データ
+        // モード設定データ（ファイル名と記録先の対応表）
         const modes = {
-            'normal': { title: '', file: 'index.html' },
-            'yoji': { title: '〜四字熟語編〜', file: '/yoji/' },
-            'minecraft': { title: '〜マイクラ編〜', file: 'minecraft.html' },
-            'airline': { title: '〜航空・マイル編〜', file: 'airline.html' }
+            'normal': { title: '', file: 'play.html', record: 'record.html' },
+            'yoji': { title: '〜四字熟語編〜', file: 'yoji.html', record: 'record_yoji.html' },
+            'minecraft': { title: '〜マイクラ編〜', file: 'minecraft.html', record: 'record_mine.html' },
+            'airline': { title: '〜航空・マイル編〜', file: 'airline.html', record: 'record_airline.html' }
         };
 
         function toggleMenu() {
@@ -136,15 +138,20 @@
         function changeMode(modeKey) {
             const mode = modes[modeKey];
             title.textContent = mode.title;
-            startBtn.href = mode.file;
+            startBtn.href = mode.file;     // プレイ用URLを変更
+            recordBtn.href = mode.record;  // 記録用URLを変更
 
             // メニューの「active」クラスを付け替える
             document.querySelectorAll('.side-menu-item').forEach(item => {
                 item.classList.remove('active');
-                if(item.textContent.includes(modeKey === 'normal' ? '通常' : modeKey)) item.classList.add('active');
+                // クリックされた項目を光らせる
+                const label = modeKey === 'normal' ? '通常' : 
+                              modeKey === 'yoji' ? '四字熟語' :
+                              modeKey === 'minecraft' ? 'マイクラ' : '航空';
+                if(item.textContent.includes(label)) item.classList.add('active');
             });
 
-            toggleMenu(); // 切り替えたらメニューを閉じる
+            toggleMenu(); 
         }
 
         trigger.addEventListener('click', toggleMenu);
