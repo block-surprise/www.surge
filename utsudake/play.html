@@ -20,7 +20,24 @@
             background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             min-height: 100vh; overflow: hidden; color: var(--text-main);
+            transition: background 0.5s;
         }
+
+        /* --- フィーバー演出 --- */
+        body.fever-mode {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            animation: fever-bg 0.5s infinite alternate;
+        }
+        @keyframes fever-bg {
+            from { filter: hue-rotate(0deg); }
+            to { filter: hue-rotate(20deg); }
+        }
+        .fever-text {
+            color: #ff4757 !important;
+            text-shadow: 0 0 15px rgba(255,71,87,0.6);
+            transform: scale(1.1);
+        }
+        /* ------------------------- */
 
         .header-stats {
             position: absolute; top: 30px; display: flex; gap: 60px;
@@ -35,6 +52,12 @@
             box-shadow: 0 30px 60px rgba(0,0,0,0.08); display: flex; flex-direction: column;
             align-items: center; justify-content: center; position: relative;
             border: 1px solid rgba(0,0,0,0.03); margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+
+        body.fever-mode .game-canvas {
+            border: 4px solid #ff7e5f;
+            box-shadow: 0 0 50px rgba(255,126,95,0.5);
         }
 
         #combo-display {
@@ -44,12 +67,12 @@
         }
         #combo-display.show { opacity: 1; transform: scale(1.2); }
 
-        #kanji-display { font-size: 5rem; margin-bottom: 30px; font-weight: bold; letter-spacing: 0.1em; }
+        #kanji-display { font-size: 5rem; margin-bottom: 30px; font-weight: bold; letter-spacing: 0.1em; transition: 0.2s; }
         #roma-display { font-size: 2.5rem; color: #ddd; font-weight: bold; font-family: 'Courier New', monospace; min-height: 1.5em; }
         .char-done { color: var(--accent); }
         .char-current { border-bottom: 5px solid var(--primary-color); color: var(--text-main); }
 
-        .ad-container { width: 100%; display: flex; justify-content: center; margin-top: 10px; min-height: 100px; }
+        .ad-container { width: 100%; display: flex; flex-direction: column; align-items: center; margin-top: 10px; min-height: 100px; }
 
         .shake { animation: shake 0.25s; border: 2px solid var(--miss-color) !important; }
         @keyframes shake {
@@ -84,17 +107,16 @@
         <div id="roma-display">Spaceキーでスタート</div>
     </div>
 
-<div class="ad-container">
-    <h2 style="font-size: 0.9rem; color: #999; margin: 0 0 10px 0;">[PR]</h2>
-    <div id="ad-slot">
-        </div>
-</div>
+    <div class="ad-container">
+        <h2 style="font-size: 0.9rem; color: #999; margin: 0 0 10px 0;">[PR]</h2>
+        <div id="ad-slot"></div>
+    </div>
 
     <div id="result-screen">
         <div class="result-card">
             <h2>Game Clear!</h2>
             <div class="result-score" id="final-score">0</div>
-            <p style="color:#999; margin-bottom:30px;">TOTAL TYPES</p>
+            <p style="color:#999; margin-bottom:30px;">TOTAL SCORE</p>
             <div class="btn-group">
                 <a href="record.html" class="btn btn-main">図鑑を見る</a>
                 <button class="btn btn-sub" onclick="location.reload()">もう一度</button>
@@ -164,7 +186,7 @@
             { k: "自動改札機", y: "じどうかいさつき" },
             { k: "展望デッキ", y: "てんぼうでっき" },
             { k: "マイル修行", y: "まいるしゅぎょう" },
-            { k: "電子マネー", y: "dennsimanee" },
+            { k: "電化製品", y: "でんかせいひん" },
             { k: "人工知能", y: "じんこうちのう" },
             { k: "ソースコード", y: "そーすこーど" },
             { k: "データベース", y: "でーたべーす" },
@@ -201,7 +223,10 @@
         let isPlaying = false, timerId = null;
         let currentKana = "", originalKana = "", solvedRoma = "", inputBuffer = "";
         let wordStartTime = 0, wordMissCount = 0;
-        let missLocations = {}; // 今回の単語でのミス位置を記録
+        let missLocations = {};
+        
+        let isFever = false;
+        let feverTimer = null;
 
         const kanjiEl = document.getElementById('kanji-display');
         const romaEl = document.getElementById('roma-display');
@@ -239,7 +264,6 @@
             const key = e.key.toLowerCase();
             let matched = false;
 
-            // 1. 通常の判定
             for (let len = 2; len >= 1; len--) {
                 const targetKana = currentKana.substring(0, len);
                 if (romanMap[targetKana]) {
@@ -260,13 +284,11 @@
                 if (matched) break;
             }
 
-            // 2. 促音（っ）の特殊判定
             if (!matched && currentKana[0] === 'っ' && currentKana.length > 1) {
                 const nextKana = currentKana[1];
                 let nextOptions = romanMap[currentKana.substring(1, 3)] || romanMap[currentKana[1]];
                 if (nextOptions) {
-                    const nextFirstChar = nextOptions[0][0];
-                    if (key === nextFirstChar) {
+                    if (key === nextOptions[0][0]) {
                         solvedRoma += key;
                         currentKana = currentKana.substring(1);
                         matched = true;
@@ -275,13 +297,25 @@
             }
 
             if (matched) {
-                score++;
+                // スコア計算
+                let points = 1;
+                let comboBonus = Math.floor(combo / 10);
+                points += comboBonus;
+                if (isFever) points *= 2;
+                
+                score += points;
                 combo++;
                 scoreEl.textContent = score;
+                
                 if (combo >= 5) {
-                    comboEl.textContent = `${combo} COMBO!`;
+                    comboEl.textContent = isFever ? `🔥 ${combo} COMBO! 🔥` : `${combo} COMBO!`;
                     comboEl.classList.add('show');
                 }
+
+                if (combo >= 20 && !isFever) {
+                    startFever();
+                }
+
                 if (currentKana.length === 0 && inputBuffer === "") {
                     const timeTaken = ((Date.now() - wordStartTime) / 1000).toFixed(2);
                     saveToLibrary(kanjiEl.textContent, originalKana, timeTaken, wordMissCount, missLocations);
@@ -292,11 +326,10 @@
             } else {
                 totalMiss++;
                 wordMissCount++;
+                stopFever(); 
                 combo = 0;
                 missEl.textContent = totalMiss;
                 
-                // ミスした「かな」の位置を特定して記録
-                // originalKanaにおける、まだ入力しきれていない部分の先頭をミス位置とする
                 const solvedLen = originalKana.length - currentKana.length;
                 const missKanaChar = originalKana[solvedLen];
                 missLocations[missKanaChar] = (missLocations[missKanaChar] || 0) + 1;
@@ -307,10 +340,31 @@
             }
         });
 
+        function startFever() {
+            isFever = true;
+            document.body.classList.add('fever-mode');
+            kanjiEl.classList.add('fever-text');
+            comboEl.style.color = "#ff4757";
+            
+            if (feverTimer) clearTimeout(feverTimer);
+            feverTimer = setTimeout(() => {
+                stopFever();
+            }, 8000);
+        }
+
+        function stopFever() {
+            isFever = false;
+            document.body.classList.remove('fever-mode');
+            kanjiEl.classList.remove('fever-text');
+            comboEl.style.color = "var(--secondary-color)";
+            if (feverTimer) clearTimeout(feverTimer);
+        }
+
         function startGame() {
             isPlaying = true;
             score = 0; totalMiss = 0; combo = 0; timeLeft = 60;
             scoreEl.textContent = "0"; missEl.textContent = "0";
+            stopFever();
             nextWord();
             if (timerId) clearInterval(timerId);
             timerId = setInterval(() => {
@@ -323,13 +377,13 @@
         function nextWord() {
             const data = wordList[Math.floor(Math.random() * wordList.length)];
             kanjiEl.textContent = data.k;
-            originalKana = data.y; // 元の読みを保持
+            originalKana = data.y;
             currentKana = data.y;
             solvedRoma = "";
             inputBuffer = "";
             wordStartTime = Date.now();
             wordMissCount = 0;
-            missLocations = {}; // ミス記録リセット
+            missLocations = {};
             updateDisplay();
         }
 
@@ -341,22 +395,13 @@
 
         function saveToLibrary(word, kana, time, miss, mLocations) {
             let history = JSON.parse(localStorage.getItem('typing_records') || '{}');
-            
-            // 既存のミス累計データを引き継ぐ
             let totalMissLocations = history[word]?.missLocations || {};
             for (let char in mLocations) {
                 totalMissLocations[char] = (totalMissLocations[char] || 0) + mLocations[char];
             }
-
             if (!history[word] || parseFloat(time) < parseFloat(history[word].time)) {
-                history[word] = { 
-                    time: time, 
-                    miss: miss, 
-                    kana: kana, 
-                    missLocations: totalMissLocations 
-                };
+                history[word] = { time: time, miss: miss, kana: kana, missLocations: totalMissLocations };
             } else {
-                // 自己ベスト更新じゃなくてもミス位置だけは更新する
                 history[word].missLocations = totalMissLocations;
             }
             localStorage.setItem('typing_records', JSON.stringify(history));
@@ -364,6 +409,7 @@
 
         function endGame() {
             isPlaying = false;
+            stopFever();
             clearInterval(timerId);
             document.getElementById('result-screen').style.display = 'flex';
             document.getElementById('final-score').textContent = score;
@@ -371,18 +417,4 @@
 
         const adList = [
             '<a href="//af.moshimo.com/af/c/click?a_id=5472673&p_id=1225&pc_id=1925&pl_id=19144" rel="nofollow" referrerpolicy="no-referrer-when-downgrade" attributionsrc><img src="//image.moshimo.com/af-img/0349/000000019144.jpg" width="468" height="60" style="border:none;"></a><img src="//i.moshimo.com/af/i/impression?a_id=5472673&p_id=1225&pc_id=1925&pl_id=19144" width="1" height="1" style="border:none;" loading="lazy">',
-            '<a href="//af.moshimo.com/af/c/click?a_id=5472665&p_id=54&pc_id=54&pl_id=1251" rel="nofollow" referrerpolicy="no-referrer-when-downgrade" attributionsrc><img src="//image.moshimo.com/af-img/0032/000000001251.gif" width="468" height="60" style="border:none;"></a><img src="//i.moshimo.com/af/i/impression?a_id=5472665&p_id=54&pc_id=54&pl_id=1251" width="1" height="1" style="border:none;" loading="lazy">',
-            '<a href="//af.moshimo.com/af/c/click?a_id=5472673&p_id=1225&pc_id=1925&pl_id=18544" rel="nofollow" referrerpolicy="no-referrer-when-downgrade" attributionsrc><img src="//image.moshimo.com/af-img/0349/000000018544.gif" width="468" height="60" style="border:none;"></a><img src="//i.moshimo.com/af/i/impression?a_id=5472673&p_id=1225&pc_id=1925&pl_id=18544" width="1" height="1" style="border:none;" loading="lazy">',
-            '<a href="//af.moshimo.com/af/c/click?a_id=5472682&p_id=5941&pc_id=16548&pl_id=75907" rel="nofollow" referrerpolicy="no-referrer-when-downgrade" attributionsrc><img src="//image.moshimo.com/af-img/5687/000000075907.jpg" width="728" height="90" style="border:none;"></a><img src="//i.moshimo.com/af/i/impression?a_id=5472682&p_id=5941&pc_id=16548&pl_id=75907" width="1" height="1" style="border:none;" loading="lazy">'
-        ];
-
-        function showRandomAd() {
-            const randomIndex = Math.floor(Math.random() * adList.length);
-            const slot = document.getElementById('ad-slot');
-            if(slot) slot.innerHTML = adList[randomIndex];
-        }
-
-        showRandomAd();
-    </script>
-</body>
-</html>
+            '<a href="//af.moshimo.com/af/c/click?a_id=5472665&p_id=54&pc_id=54&pl_id=1251" rel="nofollow" referrerpolicy="no-referrer-when-downgrade" attributionsrc><img src="//image.moshimo.com/af-img/0032/000000001251.gif" width="468" height="60" style="border:none;"></a><img src="//
