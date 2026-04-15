@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>打つだけ。 | 学校図鑑</title>
+    <style>
+        /* スタイルは送ってくれたものをそのまま継承 */
+        body {
+            background-color: #fefdfb;
+            font-family: "Hiragino Sans", sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 50px;
+        }
+        h1 { color: #2c3e50; margin-bottom: 40px; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1000px;
+        }
+        .card {
+            background: white;
+            border-radius: 20px;
+            height: 150px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 2px solid #eee;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+        .card.locked {
+            background-color: #f0f0f0;
+            color: #bdc3c7;
+            font-size: 3rem;
+            cursor: default;
+        }
+        .card.locked:hover { transform: none; }
+        .card.unlocked { border-color: #ff7e5f; }
+        .word-name { font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; }
+        .stats { font-size: 0.8rem; color: #7f8c8d; }
+        .back-link { margin-bottom: 20px; text-decoration: none; color: #ff7e5f; font-weight: bold; }
+        .modal {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 1000;
+        }
+        .modal-content {
+            background: white; padding: 40px; border-radius: 30px;
+            text-align: center; max-width: 500px; width: 90%; position: relative;
+        }
+        .close-btn { position: absolute; top: 20px; right: 20px; font-size: 1.5rem; cursor: pointer; color: #999; }
+        .analysis-kana { font-size: 2.5rem; font-weight: bold; letter-spacing: 0.1em; margin: 20px 0; word-break: break-all; }
+        .miss-highlight { color: #e74c3c; border-bottom: 4px solid #e74c3c; }
+        .analysis-label { font-size: 0.9rem; color: #7f8c8d; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="back-link">← ホームへもどる</a>
+    <h1>学校図鑑</h1>
+    
+    <div class="grid" id="record-grid"></div>
+
+    <div id="analysis-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2 id="modal-title"></h2>
+            <div class="analysis-label">苦手分析（赤い文字がミスしがち）</div>
+            <div id="modal-kana" class="analysis-kana"></div>
+            <div id="modal-stats" class="stats"></div>
+        </div>
+    </div>
+
+    <script>
+        // 学校100選のリスト
+const allWords = [
+    "国語", "数学", "理科", "社会", "英語", "音楽", "美術", "技術", "家庭科", "体育",
+    "校長先生", "担任の先生", "保健室", "図書室", "放送室", "職員室", "生徒会", "委員会", "学級会", "給食当番",
+    "掃除の時間", "休み時間", "放課後", "朝の会", "帰りの会", "自習", "宿題", "提出物", "時間割", "教科書",
+    "筆箱", "消しゴム", "シャープペン", "定規", "コンパス", "分度器", "ノート", "プリント", "黒板", "チョーク",
+    "ランドセル", "上履き", "体育館", "運動場", "プール", "理科室", "調理実習", "実験室", "顕微鏡", "アルコールランプ",
+    "入学式", "卒業式", "運動会", "体育祭", "文化祭", "合唱コンクール", "修学旅行", "校外学習", "遠足", "移動教室",
+    "中間テスト", "期末テスト", "実力テスト", "通知表", "成績", "受験生", "志望校", "夏休み", "冬休み", "春休み",
+    "部活動", "野球部", "サッカー部", "テニス部", "バスケ部", "吹奏楽部", "美術部", "科学部", "パソコン部", "演劇部",
+    "友達", "親友", "クラスメイト", "席替え", "班分け", "日直", "学級委員", "図書委員", "放送委員", "保健委員",
+    "チャイム", "校門", "昇降口", "下駄箱", "廊下", "階段", "屋上", "校庭", "花壇", "学校行事"
+];
+        
+        // 四字熟語編のデータを読み込む
+        const history = JSON.parse(localStorage.getItem('typing_records_yoji') || '{}');
+        const grid = document.getElementById('record-grid');
+        const modal = document.getElementById('analysis-modal');
+
+        allWords.forEach(word => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            if (history[word]) {
+                card.classList.add('unlocked');
+                card.innerHTML = `
+                    <div class="word-name">${word}</div>
+                    <div class="stats">最速: ${history[word].time}秒</div>
+                    <div class="stats">累計ミス: ${history[word].miss}回</div>
+                `;
+                card.onclick = () => showAnalysis(word);
+            } else {
+                card.classList.add('locked');
+                card.textContent = '?';
+            }
+            grid.appendChild(card);
+        });
+
+        function showAnalysis(word) {
+            const data = history[word];
+            if (!data) return;
+
+            document.getElementById('modal-title').textContent = word;
+            const kana = data.kana || ""; 
+            const missLocs = data.missLocations || {};
+            let displayHtml = "";
+
+            if (kana) {
+                for (let char of kana) {
+                    if (missLocs[char] && missLocs[char] > 0) {
+                        displayHtml += `<span class="miss-highlight">${char}</span>`;
+                    } else {
+                        displayHtml += `<span>${char}</span>`;
+                    }
+                }
+            } else {
+                displayHtml = "記録データが足りません";
+            }
+
+            document.getElementById('modal-kana').innerHTML = displayHtml;
+            document.getElementById('modal-stats').innerHTML = `最速タイム: ${data.time}秒 / 累計ミス: ${data.miss}回`;
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() { modal.style.display = 'none'; }
+        window.onclick = (event) => { if (event.target == modal) closeModal(); }
+    </script>
+</body>
+</html>
