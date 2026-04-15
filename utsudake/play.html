@@ -103,7 +103,6 @@
     </div>
 
     <script>
-        // 柔軟判定用のマッピング（すべての打ち方を網羅）
         const romanMap = {
             'あ':['a'],'い':['i','yi'],'う':['u','wu'],'え':['e'],'お':['o'],
             'か':['ka'],'き':['ki'],'く':['ku'],'け':['ke'],'こ':['ko'],
@@ -136,7 +135,7 @@
             'っ':['xtu','xtsu','ltu','ltsu']
         };
 
-const wordList = [
+        const wordList = [
             { k: "新千歳空港", y: "しんちとせくうこう" },
             { k: "文房具", y: "ぶんぼうぐ" },
             { k: "学校", y: "がっこう" },
@@ -200,8 +199,9 @@ const wordList = [
 
         let score = 0, totalMiss = 0, combo = 0, timeLeft = 60;
         let isPlaying = false, timerId = null;
-        let currentKana = "", solvedRoma = "", inputBuffer = "";
+        let currentKana = "", originalKana = "", solvedRoma = "", inputBuffer = "";
         let wordStartTime = 0, wordMissCount = 0;
+        let missLocations = {}; // 今回の単語でのミス位置を記録
 
         const kanjiEl = document.getElementById('kanji-display');
         const romaEl = document.getElementById('roma-display');
@@ -211,7 +211,6 @@ const wordList = [
         const canvasEl = document.getElementById('canvas');
         const comboEl = document.getElementById('combo-display');
 
-        // ガイド表示用のテキストを作る
         function getGuideRoma(kana) {
             let guide = "";
             let temp = kana;
@@ -240,7 +239,7 @@ const wordList = [
             const key = e.key.toLowerCase();
             let matched = false;
 
-            // 1. 通常の判定（1文字または2文字のかなをチェック）
+            // 1. 通常の判定
             for (let len = 2; len >= 1; len--) {
                 const targetKana = currentKana.substring(0, len);
                 if (romanMap[targetKana]) {
@@ -261,10 +260,9 @@ const wordList = [
                 if (matched) break;
             }
 
-            // 2. 促音（っ）の特殊判定（次の文字の頭文字を打った場合）
+            // 2. 促音（っ）の特殊判定
             if (!matched && currentKana[0] === 'っ' && currentKana.length > 1) {
                 const nextKana = currentKana[1];
-                // 2文字かな（きゃ、等）か1文字かな（か、等）かチェック
                 let nextOptions = romanMap[currentKana.substring(1, 3)] || romanMap[currentKana[1]];
                 if (nextOptions) {
                     const nextFirstChar = nextOptions[0][0];
@@ -276,7 +274,6 @@ const wordList = [
                 }
             }
 
-            // 結果の処理
             if (matched) {
                 score++;
                 combo++;
@@ -287,7 +284,7 @@ const wordList = [
                 }
                 if (currentKana.length === 0 && inputBuffer === "") {
                     const timeTaken = ((Date.now() - wordStartTime) / 1000).toFixed(2);
-                    saveToLibrary(kanjiEl.textContent, timeTaken, wordMissCount);
+                    saveToLibrary(kanjiEl.textContent, originalKana, timeTaken, wordMissCount, missLocations);
                     nextWord();
                 } else {
                     updateDisplay();
@@ -297,6 +294,13 @@ const wordList = [
                 wordMissCount++;
                 combo = 0;
                 missEl.textContent = totalMiss;
+                
+                // ミスした「かな」の位置を特定して記録
+                // originalKanaにおける、まだ入力しきれていない部分の先頭をミス位置とする
+                const solvedLen = originalKana.length - currentKana.length;
+                const missKanaChar = originalKana[solvedLen];
+                missLocations[missKanaChar] = (missLocations[missKanaChar] || 0) + 1;
+
                 comboEl.classList.remove('show');
                 canvasEl.classList.add('shake');
                 setTimeout(() => canvasEl.classList.remove('shake'), 250);
@@ -319,25 +323,41 @@ const wordList = [
         function nextWord() {
             const data = wordList[Math.floor(Math.random() * wordList.length)];
             kanjiEl.textContent = data.k;
+            originalKana = data.y; // 元の読みを保持
             currentKana = data.y;
             solvedRoma = "";
             inputBuffer = "";
             wordStartTime = Date.now();
             wordMissCount = 0;
+            missLocations = {}; // ミス記録リセット
             updateDisplay();
         }
 
         function updateDisplay() {
             let guide = getGuideRoma(currentKana);
-            // 入力中のバッファがある場合は、ガイドの先頭を上書き表示
             let currentDisplay = inputBuffer + guide.substring(inputBuffer.length);
             romaEl.innerHTML = `<span class="char-done">${solvedRoma}</span><span class="char-current">${currentDisplay.charAt(0)}</span><span>${currentDisplay.slice(1)}</span>`;
         }
 
-        function saveToLibrary(word, time, miss) {
+        function saveToLibrary(word, kana, time, miss, mLocations) {
             let history = JSON.parse(localStorage.getItem('typing_records') || '{}');
+            
+            // 既存のミス累計データを引き継ぐ
+            let totalMissLocations = history[word]?.missLocations || {};
+            for (let char in mLocations) {
+                totalMissLocations[char] = (totalMissLocations[char] || 0) + mLocations[char];
+            }
+
             if (!history[word] || parseFloat(time) < parseFloat(history[word].time)) {
-                history[word] = { time: time, miss: miss };
+                history[word] = { 
+                    time: time, 
+                    miss: miss, 
+                    kana: kana, 
+                    missLocations: totalMissLocations 
+                };
+            } else {
+                // 自己ベスト更新じゃなくてもミス位置だけは更新する
+                history[word].missLocations = totalMissLocations;
             }
             localStorage.setItem('typing_records', JSON.stringify(history));
         }
@@ -348,8 +368,7 @@ const wordList = [
             document.getElementById('result-screen').style.display = 'flex';
             document.getElementById('final-score').textContent = score;
         }
-    </script>
-    <script>
+
         const adList = [
             '<a href="//af.moshimo.com/af/c/click?a_id=5472673&p_id=1225&pc_id=1925&pl_id=19144" rel="nofollow" referrerpolicy="no-referrer-when-downgrade" attributionsrc><img src="//image.moshimo.com/af-img/0349/000000019144.jpg" width="468" height="60" style="border:none;"></a><img src="//i.moshimo.com/af/i/impression?a_id=5472673&p_id=1225&pc_id=1925&pl_id=19144" width="1" height="1" style="border:none;" loading="lazy">',
             '<a href="//af.moshimo.com/af/c/click?a_id=5472665&p_id=54&pc_id=54&pl_id=1251" rel="nofollow" referrerpolicy="no-referrer-when-downgrade" attributionsrc><img src="//image.moshimo.com/af-img/0032/000000001251.gif" width="468" height="60" style="border:none;"></a><img src="//i.moshimo.com/af/i/impression?a_id=5472665&p_id=54&pc_id=54&pl_id=1251" width="1" height="1" style="border:none;" loading="lazy">',
@@ -357,13 +376,12 @@ const wordList = [
             '<a href="//af.moshimo.com/af/c/click?a_id=5472682&p_id=5941&pc_id=16548&pl_id=75907" rel="nofollow" referrerpolicy="no-referrer-when-downgrade" attributionsrc><img src="//image.moshimo.com/af-img/5687/000000075907.jpg" width="728" height="90" style="border:none;"></a><img src="//i.moshimo.com/af/i/impression?a_id=5472682&p_id=5941&pc_id=16548&pl_id=75907" width="1" height="1" style="border:none;" loading="lazy">'
         ];
 
-        // ランダムに1つ選んで表示する関数
         function showRandomAd() {
             const randomIndex = Math.floor(Math.random() * adList.length);
-            document.getElementById('ad-slot').innerHTML = adList[randomIndex];
+            const slot = document.getElementById('ad-slot');
+            if(slot) slot.innerHTML = adList[randomIndex];
         }
 
-        // ページ読み込み時に実行
         showRandomAd();
     </script>
 </body>
