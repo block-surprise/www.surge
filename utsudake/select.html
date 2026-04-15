@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打つだけ。 | モード選択</title>
+    <style>
+        :root {
+            --primary-color: #ff7e5f;
+            --bg-color: #fcfaf8;
+            --text-main: #333;
+        }
+
+        body {
+            margin: 0;
+            padding: 50px 20px;
+            font-family: "Helvetica Neue", Arial, "Hiragino Sans", "Meiryo", sans-serif;
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 200;
+            letter-spacing: 0.2em;
+            margin-bottom: 40px;
+        }
+
+        .back-link {
+            text-decoration: none;
+            color: var(--primary-color);
+            font-weight: bold;
+            margin-bottom: 30px;
+        }
+
+        /* モードを並べるグリッド */
+        .mode-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .mode-card {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-decoration: none;
+            color: var(--text-main);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+            transition: 0.3s;
+            border: 2px solid transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .mode-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+            border-color: var(--primary-color);
+        }
+
+        .mode-title {
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .mode-desc {
+            font-size: 0.85rem;
+            color: #888;
+            line-height: 1.6;
+        }
+
+        .tag {
+            font-size: 0.7rem;
+            background: #eee;
+            padding: 4px 10px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="back-link">← ホームへ戻る</a>
+    <h1>SELECT MODE</h1>
+
+    <div class="mode-grid">
+        <a href="play.html" class="mode-card">
+            <span class="tag">Basic</span>
+            <div class="mode-title">通常編</div>
+            <div class="mode-desc">まずはここから！<br>日常的な言葉でタイピング練習。</div>
+        </a>
+
+        <a href="yoji.html" class="mode-card">
+            <span class="tag">Learn</span>
+            <div class="mode-title">四字熟語編</div>
+            <div class="mode-desc">100種類の四字熟語に挑戦。<br>知識と速度を同時に鍛えよう。</div>
+        </a>
+
+        <a href="school.html" class="mode-card">
+            <span class="tag">Daily</span>
+            <div class="mode-title">学校編</div>
+            <div class="mode-desc">授業や行事、文房具など<br>学校にまつわる100単語。</div>
+        </a>
+
+        <a href="dora.html" class="mode-card">
+            <span class="tag">Anime</span>
+            <div class="mode-title">ドラえもん編</div>
+            <div class="mode-desc">ひみつ道具がズラリ！<br>懐かしの道具を打ちまくろう。</div>
+        </a>
+
+        <a href="kanji.html" class="mode-card">
+            <span class="tag">Hard</span>
+            <div class="mode-title">難読漢字編</div>
+            <div class="mode-desc">【激ムズ】読めるけど書けない？<br>超高難度の漢字コレクション。</div>
+        </a>
+
+        </div>
+
+</body>
+</html>
