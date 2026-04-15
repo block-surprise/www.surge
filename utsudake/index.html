@@ -14,6 +14,7 @@
             --bg-color: #fcfaf8;
             --text-main: #333;
             --card-bg: #ffffff;
+            --menu-bg: rgba(255, 255, 255, 0.95);
         }
 
         body {
@@ -26,8 +27,94 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
+            overflow: hidden;
         }
 
+        /* --- ハンバーガーメニューのスタイル --- */
+        .menu-trigger {
+            position: fixed;
+            top: 25px;
+            left: 25px;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            padding: 5px;
+        }
+        .menu-trigger span {
+            display: block;
+            width: 100%;
+            height: 3px;
+            background: var(--text-main);
+            border-radius: 2px;
+            transition: all 0.3s;
+        }
+
+        /* サイドメニュー本体 */
+        .side-menu {
+            position: fixed;
+            top: 0;
+            left: -300px; /* 最初は隠しておく */
+            width: 280px;
+            height: 100%;
+            background: var(--menu-bg);
+            box-shadow: 10px 0 30px rgba(0,0,0,0.05);
+            z-index: 999;
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            padding: 100px 20px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .side-menu.open {
+            left: 0;
+        }
+
+        .side-menu h3 {
+            font-size: 0.8rem;
+            color: #bbb;
+            margin-left: 15px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .side-menu-item {
+            padding: 15px 20px;
+            text-decoration: none;
+            color: var(--text-main);
+            border-radius: 12px;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+        .side-menu-item:hover {
+            background: #f0f0f0;
+            padding-left: 30px;
+        }
+
+        /* メニューが開いている時のオーバーレイ */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.1);
+            opacity: 0;
+            visibility: hidden;
+            transition: 0.3s;
+            z-index: 998;
+        }
+        .overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* アイコンのアニメーション（開いたとき×にする） */
+        .menu-trigger.open span:nth-child(1) { transform: translateY(11px) rotate(45deg); }
+        .menu-trigger.open span:nth-child(2) { opacity: 0; }
+        .menu-trigger.open span:nth-child(3) { transform: translateY(-11px) rotate(-45deg); }
+
+        /* --- メインコンテンツのスタイル --- */
         .container {
             text-align: center;
             background: var(--card-bg);
@@ -36,12 +123,13 @@
             box-shadow: 0 20px 50px rgba(0,0,0,0.05);
             max-width: 500px;
             width: 90%;
+            position: relative;
         }
 
         h1 {
             font-size: 3.5rem;
             margin: 0;
-            font-weight: 200; /* 細身のフォントで洗練さを */
+            font-weight: 200;
             letter-spacing: 0.3em;
             color: var(--text-main);
             margin-bottom: 10px;
@@ -71,7 +159,6 @@
             border: 1px solid #eee;
         }
 
-        /* あそぶボタン */
         .btn-play {
             background: var(--text-main);
             color: white;
@@ -82,7 +169,6 @@
             transform: translateY(-2px);
         }
 
-        /* きろくボタン */
         .btn-record {
             background: white;
             color: var(--text-main);
@@ -102,6 +188,22 @@
 </head>
 <body>
 
+    <div class="menu-trigger" id="menu-trigger">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+
+    <div class="side-menu" id="side-menu">
+        <h3>Mode Selection</h3>
+        <a href="play.html" class="side-menu-item">通常編</a>
+        <a href="yoji.html" class="side-menu-item">四字熟語編</a>
+        <a href="minecraft.html" class="side-menu-item">マイクラ編</a>
+        <a href="airline.html" class="side-menu-item">航空・マイル編</a>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+
     <div class="container">
         <h1>打つだけ。</h1>
         <p class="subtitle">Just Typing.</p>
@@ -116,5 +218,20 @@
         </div>
     </div>
 
+    <script>
+        const trigger = document.getElementById('menu-trigger');
+        const menu = document.getElementById('side-menu');
+        const overlay = document.getElementById('overlay');
+
+        // メニューの開閉
+        function toggleMenu() {
+            trigger.classList.toggle('open');
+            menu.classList.toggle('open');
+            overlay.classList.toggle('show');
+        }
+
+        trigger.addEventListener('click', toggleMenu);
+        overlay.addEventListener('click', toggleMenu);
+    </script>
 </body>
 </html>
