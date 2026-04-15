@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>打つだけ。 | 四字熟語図鑑</title>
+    <style>
+        /* スタイルは送ってくれたものをそのまま継承 */
+        body {
+            background-color: #fefdfb;
+            font-family: "Hiragino Sans", sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 50px;
+        }
+        h1 { color: #2c3e50; margin-bottom: 40px; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1000px;
+        }
+        .card {
+            background: white;
+            border-radius: 20px;
+            height: 150px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 2px solid #eee;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+        .card.locked {
+            background-color: #f0f0f0;
+            color: #bdc3c7;
+            font-size: 3rem;
+            cursor: default;
+        }
+        .card.locked:hover { transform: none; }
+        .card.unlocked { border-color: #ff7e5f; }
+        .word-name { font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; }
+        .stats { font-size: 0.8rem; color: #7f8c8d; }
+        .back-link { margin-bottom: 20px; text-decoration: none; color: #ff7e5f; font-weight: bold; }
+        .modal {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 1000;
+        }
+        .modal-content {
+            background: white; padding: 40px; border-radius: 30px;
+            text-align: center; max-width: 500px; width: 90%; position: relative;
+        }
+        .close-btn { position: absolute; top: 20px; right: 20px; font-size: 1.5rem; cursor: pointer; color: #999; }
+        .analysis-kana { font-size: 2.5rem; font-weight: bold; letter-spacing: 0.1em; margin: 20px 0; word-break: break-all; }
+        .miss-highlight { color: #e74c3c; border-bottom: 4px solid #e74c3c; }
+        .analysis-label { font-size: 0.9rem; color: #7f8c8d; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="back-link">← ホームへもどる</a>
+    <h1>四字熟語図鑑</h1>
+    
+    <div class="grid" id="record-grid"></div>
+
+    <div id="analysis-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2 id="modal-title"></h2>
+            <div class="analysis-label">苦手分析（赤い文字がミスしがち）</div>
+            <div id="modal-kana" class="analysis-kana"></div>
+            <div id="modal-stats" class="stats"></div>
+        </div>
+    </div>
+
+    <script>
+        // 四字熟語100選のリスト
+        const allWords = [
+            "一石二鳥", "一生懸命", "四苦八苦", "自業自得", "温故知新", "異口同音", "以心伝心", "意味深長", "右往左往", "我田引水",
+            "画竜点睛", "疑心暗鬼", "急転直下", "弱肉強食", "公明正大", "呉越同舟", "孤立無援", "五里霧中", "言語道断", "三日坊主",
+            "自作自演", "試行錯誤", "自由自在", "取捨選択", "順風満帆", "心機一転", "切磋琢磨", "絶体絶命", "千客万来", "千変万化",
+            "前代未聞", "相思相愛", "大器晩成", "泰然自若", "大胆不敵", "他力本願", "単刀直入", "朝令暮改", "猪突猛進", "適材適所",
+            "徹頭徹尾", "電光石火", "天真爛漫", "道聴塗説", "独断専行", "内憂外患", "難攻不落", "日進月歩", "馬耳東風", "八方美人",
+            "波乱万丈", "半信半疑", "百戦錬磨", "付和雷同", "粉骨砕身", "文武両道", "傍若無人", "本末転倒", "無我夢中", "無病息災",
+            "油断大敵", "用意周到", "臨機応変", "老若男女", "一攫千金", "臥薪嘗胆", "勧善懲悪", "危機一髪", "起死回生", "喜怒哀楽",
+            "興味津々", "玉石混交", "近朱必赤", "空前絶後", "質実剛健", "縦横無尽", "主客転倒", "正々堂々", "青天霹靂", "清廉潔白",
+            "多事多難", "大願成就", "朝三暮四", "適者生存", "徹宵徹夜", "転禍為福", "天衣無縫", "当代随一", "不言実行", "不撓不屈",
+            "不即不離", "抱腹絶倒", "満身創痍", "未来永劫", "無味乾燥", "明鏡止水", "面目躍如", "勇往邁進", "悠々自適", "一刀両断"
+        ];
+        
+        // 四字熟語編のデータを読み込む
+        const history = JSON.parse(localStorage.getItem('typing_records_yoji') || '{}');
+        const grid = document.getElementById('record-grid');
+        const modal = document.getElementById('analysis-modal');
+
+        allWords.forEach(word => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            if (history[word]) {
+                card.classList.add('unlocked');
+                card.innerHTML = `
+                    <div class="word-name">${word}</div>
+                    <div class="stats">最速: ${history[word].time}秒</div>
+                    <div class="stats">累計ミス: ${history[word].miss}回</div>
+                `;
+                card.onclick = () => showAnalysis(word);
+            } else {
+                card.classList.add('locked');
+                card.textContent = '?';
+            }
+            grid.appendChild(card);
+        });
+
+        function showAnalysis(word) {
+            const data = history[word];
+            if (!data) return;
+
+            document.getElementById('modal-title').textContent = word;
+            const kana = data.kana || ""; 
+            const missLocs = data.missLocations || {};
+            let displayHtml = "";
+
+            if (kana) {
+                for (let char of kana) {
+                    if (missLocs[char] && missLocs[char] > 0) {
+                        displayHtml += `<span class="miss-highlight">${char}</span>`;
+                    } else {
+                        displayHtml += `<span>${char}</span>`;
+                    }
+                }
+            } else {
+                displayHtml = "記録データが足りません";
+            }
+
+            document.getElementById('modal-kana').innerHTML = displayHtml;
+            document.getElementById('modal-stats').innerHTML = `最速タイム: ${data.time}秒 / 累計ミス: ${data.miss}回`;
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() { modal.style.display = 'none'; }
+        window.onclick = (event) => { if (event.target == modal) closeModal(); }
+    </script>
+</body>
+</html>
