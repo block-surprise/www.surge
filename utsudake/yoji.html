@@ -435,18 +435,22 @@ const wordList = [
             romaEl.innerHTML = `<span class="char-done">${solvedRoma}</span><span class="char-current">${currentDisplay.charAt(0)}</span><span>${currentDisplay.slice(1)}</span>`;
         }
 
-        function saveToLibrary(word, kana, time, miss, mLocations) {
-            let history = JSON.parse(localStorage.getItem('typing_records') || '{}');
+function saveToLibrary(word, kana, time, miss, mLocations) {
+          
+            let history = JSON.parse(localStorage.getItem('typing_records_yoji') || '{}');
             let totalMissLocations = history[word]?.missLocations || {};
+            
             for (let char in mLocations) {
                 totalMissLocations[char] = (totalMissLocations[char] || 0) + mLocations[char];
             }
+            
             if (!history[word] || parseFloat(time) < parseFloat(history[word].time)) {
                 history[word] = { time: time, miss: miss, kana: kana, missLocations: totalMissLocations };
             } else {
                 history[word].missLocations = totalMissLocations;
             }
-            localStorage.setItem('typing_records', JSON.stringify(history));
+            
+            localStorage.setItem('typing_records_yoji', JSON.stringify(history));
         }
 
         function endGame() {
