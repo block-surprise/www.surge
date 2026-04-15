@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打つだけ。 | プレイ画面</title>
+    <style>
+        :root {
+            --primary-color: #ff7e5f;
+            --secondary-color: #feb47b;
+            --bg-color: #fcfaf8;
+            --text-main: #333;
+            --accent: #3498db;
+            --miss-color: #e74c3c;
+        }
+
+        body {
+            margin: 0; padding: 0;
+            font-family: "Helvetica Neue", Arial, "Hiragino Sans", "Meiryo", sans-serif;
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 100vh; overflow: hidden; color: var(--text-main);
+            transition: background 0.5s, filter 0.5s;
+        }
+
+        /* --- フィーバー演出（ブルー＆ゴールドVer.） --- */
+        body.fever-mode {
+            background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+            animation: fever-bg 0.5s infinite alternate;
+        }
+
+        @keyframes fever-bg {
+            from { filter: brightness(1.0) saturate(1.0); }
+            to { filter: brightness(1.1) saturate(1.2); }
+        }
+
+        .fever-text {
+            color: #ffd700 !important;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 0 40px rgba(255, 255, 255, 0.5);
+            transform: scale(1.1);
+        }
+
+        body.fever-mode .game-canvas {
+            border: 4px solid #ffd700;
+            box-shadow: 0 0 60px rgba(0, 210, 255, 0.6);
+        }
+        /* ------------------------- */
+
+        .header-stats {
+            position: absolute; top: 30px; display: flex; gap: 60px;
+            background: white; padding: 15px 40px; border-radius: 50px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); font-size: 1.1rem; font-weight: bold; z-index: 10;
+        }
+
+        .stat-item span { color: var(--primary-color); font-size: 1.4rem; }
+
+        .game-canvas {
+            width: 900px; height: 420px; background: white; border-radius: 40px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.08); display: flex; flex-direction: column;
+            align-items: center; justify-content: center; position: relative;
+            border: 1px solid rgba(0,0,0,0.03); margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+
+        #combo-display {
+            position: absolute; right: 50px; top: 50px; font-size: 2rem;
+            font-style: italic; color: var(--secondary-color); opacity: 0;
+            transform: scale(0.5); transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #combo-display.show { opacity: 1; transform: scale(1.2); }
+
+        #kanji-display { font-size: 5rem; margin-bottom: 30px; font-weight: bold; letter-spacing: 0.1em; transition: 0.2s; }
+        #roma-display { font-size: 2.5rem; color: #ddd; font-weight: bold; font-family: 'Courier New', monospace; min-height: 1.5em; }
+        .char-done { color: var(--accent); }
+        .char-current { border-bottom: 5px solid var(--primary-color); color: var(--text-main); }
+
+        .ad-container { width: 100%; display: flex; flex-direction: column; align-items: center; margin-top: 10px; min-height: 100px; }
+
+        .shake { animation: shake 0.25s; border: 2px solid var(--miss-color) !important; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-15px); }
+            40%, 80% { transform: translateX(15px); }
+        }
+
+        #result-screen {
+            display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.98);
+            flex-direction: column; align-items: center; justify-content: center; z-index: 100;
+        }
+        .result-card { background: white; padding: 50px; border-radius: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.1); text-align: center; }
+        .result-score { font-size: 7rem; color: var(--primary-color); font-weight: 900; }
+        .btn-group { display: flex; gap: 20px; margin-top: 40px; }
+        .btn { padding: 18px 45px; border-radius: 15px; font-size: 1.1rem; font-weight: bold; cursor: pointer; text-decoration: none; border: none; }
+        .btn-main { background: var(--text-main); color: white; }
+        .btn-sub { background: #eee; color: #333; }
+    </style>
+</head>
+<body>
+
+    <div class="header-stats">
+        <div class="stat-item">TIME: <span id="timer">60</span>s</div>
+        <div class="stat-item">SCORE: <span id="score">0</span></div>
+        <div class="stat-item">MISS: <span id="miss-total">0</span></div>
+    </div>
+
+    <div class="game-canvas" id="canvas">
+        <div id="combo-display">0 COMBO!</div>
+        <div id="kanji-display">準備はいい？</div>
+        <div id="roma-display">Spaceキーでスタート</div>
+    </div>
+
+    <div class="ad-container">
+        <h2 style="font-size: 0.9rem; color: #999; margin: 0 0 10px 0;">[PR]</h2>
+        <div id="ad-slot"></div>
+    </div>
+
+    <div id="result-screen">
+        <div class="result-card">
+            <h2>Game Clear!</h2>
+            <div class="result-score" id="final-score">0</div>
+            <p style="color:#999; margin-bottom:30px;">TOTAL SCORE</p>
+            <div class="btn-group">
+                <a href="record.html" class="btn btn-main">図鑑を見る</a>
+                <button class="btn btn-sub" onclick="location.reload()">もう一度</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const romanMap = {
+            'あ':['a'],'い':['i','yi'],'う':['u','wu'],'え':['e'],'お':['o'],
+            'か':['ka'],'き':['ki'],'く':['ku'],'け':['ke'],'こ':['ko'],
+            'さ':['sa'],'し':['si','shi'],'す':['su'],'せ':['se'],'そ':['so'],
+            'た':['ta'],'ち':['ti','chi'],'つ':['tu','tsu'],'て':['te'],'と':['to'],
+            'な':['na'],'に':['ni'],'ぬ':['nu'],'ね':['ne'],'の':['no'],
+            'は':['ha'],'ひ':['hi'],'ふ':['fu','hu'],'へ':['he'],'ほ':['ho'],
+            'ま':['ma'],'み':['mi'],'む':['mu'],'め':['me'],'も':['mo'],
+            'や':['ya'],'ゆ':['yu'],'よ':['yo'],
+            'ら':['ra'],'り':['ri'],'る':['ru'],'れ':['re'],'ろ':['ro'],
+            'わ':['wa'],'を':['wo'],'ん':['nn','n'],'ー':['-'],
+            'が':['ga'],'ぎ':['gi'],'ぐ':['gu'],'げ':['ge'],'ご':['go'],
+            'ざ':['za'],'じ':['zi','ji'],'ず':['zu'],'ぜ':['ze'],'ぞ':['zo'],
+            'だ':['da'],'ぢ':['di'],'づ':['du'],'で':['de'],'ど':['do'],
+            'ば':['ba'],'び':['bi'],'ぶ':['bu'],'べ':['be'],'ぼ':['bo'],
+            'ぱ':['pa'],'ぴ':['pi'],'ぷ':['pu'],'ぺ':['pe'],'ぽ':['po'],
+            'きゃ':['kya','ki-lya','ki-xyu'],'きゅ':['kyu','ki-lyu','ki-xyu'],'きょ':['kyo','ki-lyo','ki-xyo'],
+            'しゃ':['sya','sha','si-lya'],'しゅ':['syu','shu','si-lyu'],'しょ':['syo','sho','si-lyo'],
+            'ちゃ':['cha','tya','ti-lya'],'ちゅ':['chu','tyu','ti-lyu'],'ちょ':['cho','tyo','ti-lyo'],
+            'にゃ':['nya','ni-lya'],'にゅ':['nyu','ni-lyu'],'にょ':['nyo','ni-lyo'],
+            'ひゃ':['hya','hi-lya'],'ひゅ':['hyu','hi-lyu'],'ひょ':['hyo','hi-lyo'],
+            'みゃ':['mya','mi-lya'],'みゅ':['myu','mi-lyu'],'みょ':['myo','mi-lyo'],
+            'りゃ':['rya','ri-lya'],'りゅ':['ryu','ri-lyu'],'りょ':['ryo','ri-lyo'],
+            'ぎゃ':['gya','gi-lya'],'ぎゅ':['gyu','gi-lyu'],'ぎょ':['gyo','gi-lyo'],
+            'じゃ':['ja','zya','zi-lya'],'じゅ':['ju','zyu','zi-lyu'],'じょ':['jo','zyo','zi-lyo'],
+            'びゃ':['bya','bi-lya'],'びゅ':['byu','bi-lyu'],'びょ':['byo','bi-lyo'],
+            'ぴゃ':['pya','pi-lya'],'ぴゅ':['pyu','pi-lyu'],'ぴょ':['pyo','pi-lyo'],
+            'ぁ':['xa','la'],'ぃ':['xi','li'],'ぅ':['xu','lu'],'ぇ':['xe','le'],'ぉ':['xo','lo'],
+            'ゃ':['xya','lya'],'ゅ':['xyu','lyu'],'ょ':['xyo','lyo'],
+            'っ':['xtu','xtsu','ltu','ltsu']
+        };
+
+const wordList = [
+    { k: "ドラえもん", y: "どらえもん" }, { k: "野比のび太", y: "のびのびた" }, { k: "源静香", y: "みなもとしずか" }, { k: "剛田武", y: "ごうだたけし" }, { k: "骨川スネ夫", y: "ほねかわすねお" },
+    { k: "ドラミ", y: "どらみ" }, { k: "出木杉英才", y: "できすぎひでとし" }, { k: "ジャイ子", y: "じゃいこ" }, { k: "セワシ", y: "せわし" }, { k: "先生", y: "せんせい" },
+    { k: "タケコプター", y: "たけこぷたー" }, { k: "どこでもドア", y: "どこでもどあ" }, { k: "タイムマシン", y: "たいむましん" }, { k: "スモールライト", y: "すもーるらいと" }, { k: "ビッグライト", y: "びっぐらいと" },
+    { k: "四次元ポケット", y: "よじげんぽけっと" }, { k: "暗記パン", y: "あんきぱん" }, { k: "ほんやくコンニャク", y: "ほんやくこんにゃく" }, { k: "もしもボックス", y: "もしもぼっくす" }, { k: "タイムふろしき", y: "たいむふろしき" },
+    { k: "通りぬけフープ", y: "とおりぬけふーぷ" }, { k: "着せかえカメラ", y: "きせかえかめら" }, { k: "空気砲", y: "くうきほう" }, { k: "ショックガン", y: "しょっくがん" }, { k: "ころばし屋", y: "ころばしや" },
+    { k: "独裁スイッチ", y: "どくさいすいっち" }, { k: "地球破壊爆弾", y: "ちきゅうはかいばくだん" }, { k: "名刀電光丸", y: "めいとうでんこうまる" }, { k: "ひらりマント", y: "ひらりまんと" }, { k: "身代わりテレビ", y: "みがわりてれび" },
+    { k: "きこりの泉", y: "きこりのいずみ" }, { k: "バイバイン", y: "ばいばいん" }, { k: "正直太郎", y: "しょうじきたろう" }, { k: "ウマタケ", y: "うまたけ" }, { k: "竹馬", y: "たけうま" },
+    { k: "アベコンベ", y: "あべこんべ" }, { k: "グルメテーブルかけ", y: "ぐるみーてーぶるかけ" }, { k: "エースキャップ", y: "えーすきゃっぷ" }, { k: "とりよせバッグ", y: "とりよせばっぐ" }, { k: "ころりろ窓", y: "ころりろまど" },
+    { k: "きせかえカメラ", y: "きせかえかめら" }, { k: "桃太郎印のきびだんご", y: "ももたろうじるしのきびだんご" }, { k: "コエカタマリン", y: "こえかたまりん" }, { k: "フエール銀行", y: "ふえーるぎんこう" }, { k: "タイムテレビ", y: "たいむてれび" },
+    { k: "タイムパトロール", y: "たいむぱとろーる" }, { k: "ミニドラ", y: "みにどら" }, { k: "どら焼き", y: "どらやき" }, { k: "ネズミ", y: "ねずみ" }, { k: "空き地", y: "あきち" },
+    { k: "神成さん", y: "かみなりさん" }, { k: "土管", y: "どかん" }, { k: "タケコプター", y: "たけこぷたー" }, { k: "ピー助", y: "ぴーすけ" }, { k: "恐竜", y: "きょうりゅう" },
+    { k: "鉄人兵団", y: "てつじんへいだん" }, { k: "魔界大冒険", y: "まかいだいぼうけん" }, { k: "海底鬼岩城", y: "かいていきがんじょう" }, { k: "宇宙小戦争", y: "うちゅうりびるうぉーず" }, { k: "日本誕生", y: "にほんたんじょう" },
+    { k: "アニマル惑星", y: "あにまるぷらねっと" }, { k: "雲の王国", y: "くものおうこく" }, { k: "夢幻三剣士", y: "むげんさんけんし" }, { k: "銀河超特急", y: "ぎんがえくすぷれす" }, { k: "創世日記", y: "そうせいにっき" },
+    { k: "南海大冒険", y: "なんかいだいぼうけん" }, { k: "宇宙漂流記", y: "うちゅうひょうりゅうき" }, { k: "太陽王伝説", y: "たいようおうでんせつ" }, { k: "翼の勇者たち", y: "つばさのゆうしゃたち" }, { k: "ロボット王国", y: "ろぼっときんぐだむ" },
+    { k: "ふしぎ風使い", y: "ふしぎかぜつかい" }, { k: "ワンニャン時空伝", y: "わんにゃんじくうでん" }, { k: "新恐竜", y: "しんきょうりゅう" }, { k: "スタンドバイミー", y: "すたんどばいみー" }, { k: "二十二世紀", y: "にじゅうにせいき" },
+    { k: "野比家", y: "のびけ" }, { k: "松芝ロボット工場", y: "まつしばろぼっとこうじょう" }, { k: "黄色いドラえもん", y: "きいろいどらえもん" }, { k: "青いタヌキ", y: "あいたぬき" }, { k: "猫型ロボット", y: "ねこがたろぼっと" },
+    { k: "おざしきつりぼり", y: "おざしきつりぼり" }, { k: "スモールライト", y: "すもーるらいと" }, { k: "空気ピストル", y: "くうきぴすとる" }, { k: "透明マント", y: "とうめいまんと" }, { k: "石ころぼうし", y: "いしころぼうし" },
+    { k: "タヌキ", y: "たぬき" }, { k: "ジャイアンのリサイタル", y: "じゃいあんのりさいたる" }, { k: "きれいなジャイアン", y: "きれいなじゃいあん" }, { k: "心の友", y: "こころのとも" }, { k: "剛田商店", y: "ごうだしょうてん" },
+    { k: "スネ夫の自慢", y: "すねおのじまん" }, { k: "ラジコン", y: "らじこん" }, { k: "しずかちゃんのお風呂", y: "しずかちゃんのおふろ" }, { k: "バイオリン", y: "ばいおりん" }, { k: "焼き芋", y: "やきいも" },
+    { k: "昼寝", y: "ひるね" }, { k: "あやとり", y: "あやとり" }, { k: "射撃", y: "しゃげき" }, { k: "のび太のくせに", y: "のびたのくせに" }, { k: "ドラ焼き大好き", y: "どらやきだいすき" }
+];
+        let score = 0, totalMiss = 0, combo = 0, timeLeft = 60;
+        let isPlaying = false, timerId = null;
+        let currentKana = "", originalKana = "", solvedRoma = "", inputBuffer = "";
+        let wordStartTime = 0, wordMissCount = 0;
+        let missLocations = {};
+        
+        let isFever = false;
+        let feverTimer = null;
+
+        const kanjiEl = document.getElementById('kanji-display');
+        const romaEl = document.getElementById('roma-display');
+        const scoreEl = document.getElementById('score');
+        const timerEl = document.getElementById('timer');
+        const missEl = document.getElementById('miss-total');
+        const canvasEl = document.getElementById('canvas');
+        const comboEl = document.getElementById('combo-display');
+
+        function getGuideRoma(kana) {
+            let guide = "";
+            let temp = kana;
+            while(temp.length > 0) {
+                let found = false;
+                for(let len=2; len>=1; len--) {
+                    let part = temp.substring(0, len);
+                    if(romanMap[part]) {
+                        guide += romanMap[part][0];
+                        temp = temp.substring(len);
+                        found = true; break;
+                    }
+                }
+                if(!found) { guide += temp[0]; temp = temp.substring(1); }
+            }
+            return guide;
+        }
+
+        window.addEventListener('keydown', e => {
+            if (!isPlaying) {
+                if (e.code === 'Space') { e.preventDefault(); startGame(); }
+                return;
+            }
+
+            if (e.key.length !== 1 || e.key === " ") return;
+            const key = e.key.toLowerCase();
+            let matched = false;
+
+            for (let len = 2; len >= 1; len--) {
+                const targetKana = currentKana.substring(0, len);
+                if (romanMap[targetKana]) {
+                    const options = romanMap[targetKana];
+                    for (const roma of options) {
+                        if (roma.startsWith(inputBuffer + key)) {
+                            matched = true;
+                            inputBuffer += key;
+                            if (inputBuffer === roma) {
+                                solvedRoma += inputBuffer;
+                                currentKana = currentKana.substring(len);
+                                inputBuffer = "";
+                            }
+                            break;
+                        }
+                    }
+                }
+                if (matched) break;
+            }
+
+            if (!matched && currentKana[0] === 'っ' && currentKana.length > 1) {
+                const nextKana = currentKana[1];
+                let nextOptions = romanMap[currentKana.substring(1, 3)] || romanMap[currentKana[1]];
+                if (nextOptions) {
+                    if (key === nextOptions[0][0]) {
+                        solvedRoma += key;
+                        currentKana = currentKana.substring(1);
+                        matched = true;
+                    }
+                }
+            }
+
+            if (matched) {
+                let points = 1;
+                let comboBonus = Math.floor(combo / 10);
+                points += comboBonus;
+                if (isFever) points *= 2;
+                
+                score += points;
+                combo++;
+                scoreEl.textContent = score;
+                
+                if (combo >= 5) {
+                    comboEl.textContent = isFever ? `✨ ${combo} COMBO! ✨` : `${combo} COMBO!`;
+                    comboEl.classList.add('show');
+                }
+
+                if (combo >= 20 && !isFever) {
+                    startFever();
+                }
+
+                if (currentKana.length === 0 && inputBuffer === "") {
+                    const timeTaken = ((Date.now() - wordStartTime) / 1000).toFixed(2);
+                    saveToLibrary(kanjiEl.textContent, originalKana, timeTaken, wordMissCount, missLocations);
+                    nextWord();
+                } else {
+                    updateDisplay();
+                }
+            } else {
+                totalMiss++;
+                wordMissCount++;
+                stopFever(); 
+                combo = 0;
+                missEl.textContent = totalMiss;
+                
+                const solvedLen = originalKana.length - currentKana.length;
+                const missKanaChar = originalKana[solvedLen];
+                missLocations[missKanaChar] = (missLocations[missKanaChar] || 0) + 1;
+
+                comboEl.classList.remove('show');
+                canvasEl.classList.add('shake');
+                setTimeout(() => canvasEl.classList.remove('shake'), 250);
+            }
+        });
+
+        function startFever() {
+            isFever = true;
+            document.body.classList.add('fever-mode');
+            kanjiEl.classList.add('fever-text');
+            comboEl.style.color = "#ffd700";
+            
+            if (feverTimer) clearTimeout(feverTimer);
+            feverTimer = setTimeout(() => {
+                stopFever();
+            }, 8000);
+        }
+
+        function stopFever() {
+            isFever = false;
+            document.body.classList.remove('fever-mode');
+            kanjiEl.classList.remove('fever-text');
+            comboEl.style.color = "var(--secondary-color)";
+            if (feverTimer) clearTimeout(feverTimer);
+        }
+
+        function startGame() {
+            isPlaying = true;
+            score = 0; totalMiss = 0; combo = 0; timeLeft = 60;
+            scoreEl.textContent = "0"; missEl.textContent = "0";
+            stopFever();
+            nextWord();
+            if (timerId) clearInterval(timerId);
+            timerId = setInterval(() => {
+                timeLeft--;
+                timerEl.textContent = timeLeft;
+                if (timeLeft <= 0) endGame();
+            }, 1000);
+        }
+
+        function nextWord() {
+            const data = wordList[Math.floor(Math.random() * wordList.length)];
+            kanjiEl.textContent = data.k;
+            originalKana = data.y;
+            currentKana = data.y;
+            solvedRoma = "";
+            inputBuffer = "";
+            wordStartTime = Date.now();
+            wordMissCount = 0;
+            missLocations = {};
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            let guide = getGuideRoma(currentKana);
+            let currentDisplay = inputBuffer + guide.substring(inputBuffer.length);
+            romaEl.innerHTML = `<span class="char-done">${solvedRoma}</span><span class="char-current">${currentDisplay.charAt(0)}</span><span>${currentDisplay.slice(1)}</span>`;
+        }
+
+        function saveToLibrary(word, kana, time, miss, mLocations) {
+            let history = JSON.parse(localStorage.getItem('typing_records') || '{}');
+            let totalMissLocations = history[word]?.missLocations || {};
+            for (let char in mLocations) {
+                totalMissLocations[char] = (totalMissLocations[char] || 0) + mLocations[char];
+            }
+            if (!history[word] || parseFloat(time) < parseFloat(history[word].time)) {
+                history[word] = { time: time, miss: miss, kana: kana, missLocations: totalMissLocations };
+            } else {
+                history[word].missLocations = totalMissLocations;
+            }
+            localStorage.setItem('typing_records', JSON.stringify(history));
+        }
+
+        function endGame() {
+            isPlaying = false;
+            stopFever();
+            clearInterval(timerId);
+            document.getElementById('result-screen').style.display = 'flex';
+            document.getElementById('final-score').textContent = score;
+        }
+
+        const adList = [
+            '<a href="//af.moshimo.com/af/c/click?a_id=5472673&p_id=1225&pc_id=1925&pl_id=19144" rel="nofollow" referrerpolicy="no-referrer-when-downgrade" attributionsrc><img src="//image.moshimo.com/af-img/0349/000000019144.jpg" width="468" height="60" style="border:none;"></a><img src="//i.moshimo.com/af/i/impression?a_id=5472673&p_id=1225&pc_id=1925&pl_id=19144" width="1" height="1" style="border:none;" loading="lazy">',
+            '<a href="//af.moshimo.com/af/c/click?a_id=5472665&p_id=54&pc_id=54&pl_id=1251" rel="nofollow" referrerpolicy="no-referrer-when-downgrade" attributionsrc><img src="//image.moshimo.com/af-img/0032/000000001251.gif" width="468" height="60" style="border:none;"></a><img src="//i.moshimo.com/af/i/impression?a_id=5472665&p_id=54&pc_id=54&pl_id=1251" width="1" height="1" style="border:none;" loading="lazy">',
+            '<a href="//af.moshimo.com/af/c/click?a_id=5472673&p_id=1225&pc_id=1925&pl_id=18544" rel="nofollow" referrerpolicy="no-referrer-when-downgrade" attributionsrc><img src="//image.moshimo.com/af-img/0349/000000018544.gif" width="468" height="60" style="border:none;"></a><img src="//i.moshimo.com/af/i/impression?a_id=5472673&p_id=1225&pc_id=1925&pl_id=18544" width="1" height="1" style="border:none;" loading="lazy">',
+            '<a href="//af.moshimo.com/af/c/click?a_id=5472682&p_id=5941&pc_id=16548&pl_id=75907" rel="nofollow" referrerpolicy="no-referrer-when-downgrade" attributionsrc><img src="//image.moshimo.com/af-img/5687/000000075907.jpg" width="728" height="90" style="border:none;"></a><img src="//i.moshimo.com/af/i/impression?a_id=5472682&p_id=5941&pc_id=16548&pl_id=75907" width="1" height="1" style="border:none;" loading="lazy">'
+        ];
+
+        function showRandomAd() {
+            const randomIndex = Math.floor(Math.random() * adList.length);
+            const slot = document.getElementById('ad-slot');
+            if(slot) slot.innerHTML = adList[randomIndex];
+        }
+
+        showRandomAd();
+    </script>
+</body>
+</html>
