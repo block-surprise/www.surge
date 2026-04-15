@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打つだけ。 | プレイ画面</title>
+    <style>
+        :root {
+            --primary-color: #ff7e5f;
+            --secondary-color: #feb47b;
+            --bg-color: #fcfaf8;
+            --text-main: #333;
+            --accent: #3498db;
+            --miss-color: #e74c3c;
+        }
+
+        body {
+            margin: 0; padding: 0;
+            font-family: "Helvetica Neue", Arial, "Hiragino Sans", "Meiryo", sans-serif;
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 100vh; overflow: hidden; color: var(--text-main);
+            transition: background 0.5s, filter 0.5s;
+        }
+
+        /* --- フィーバー演出（ブルー＆ゴールドVer.） --- */
+        body.fever-mode {
+            background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+            animation: fever-bg 0.5s infinite alternate;
+        }
+
+        @keyframes fever-bg {
+            from { filter: brightness(1.0) saturate(1.0); }
+            to { filter: brightness(1.1) saturate(1.2); }
+        }
+
+        .fever-text {
+            color: #ffd700 !important;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 0 40px rgba(255, 255, 255, 0.5);
+            transform: scale(1.1);
+        }
+
+        body.fever-mode .game-canvas {
+            border: 4px solid #ffd700;
+            box-shadow: 0 0 60px rgba(0, 210, 255, 0.6);
+        }
+        /* ------------------------- */
+
+        .header-stats {
+            position: absolute; top: 30px; display: flex; gap: 60px;
+            background: white; padding: 15px 40px; border-radius: 50px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); font-size: 1.1rem; font-weight: bold; z-index: 10;
+        }
+
+        .stat-item span { color: var(--primary-color); font-size: 1.4rem; }
+
+        .game-canvas {
+            width: 900px; height: 420px; background: white; border-radius: 40px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.08); display: flex; flex-direction: column;
+            align-items: center; justify-content: center; position: relative;
+            border: 1px solid rgba(0,0,0,0.03); margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+
+        #combo-display {
+            position: absolute; right: 50px; top: 50px; font-size: 2rem;
+            font-style: italic; color: var(--secondary-color); opacity: 0;
+            transform: scale(0.5); transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #combo-display.show { opacity: 1; transform: scale(1.2); }
+
+        #kanji-display { font-size: 5rem; margin-bottom: 30px; font-weight: bold; letter-spacing: 0.1em; transition: 0.2s; }
+        #roma-display { font-size: 2.5rem; color: #ddd; font-weight: bold; font-family: 'Courier New', monospace; min-height: 1.5em; }
+        .char-done { color: var(--accent); }
+        .char-current { border-bottom: 5px solid var(--primary-color); color: var(--text-main); }
+
+        .ad-container { width: 100%; display: flex; flex-direction: column; align-items: center; margin-top: 10px; min-height: 100px; }
+
+        .shake { animation: shake 0.25s; border: 2px solid var(--miss-color) !important; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-15px); }
+            40%, 80% { transform: translateX(15px); }
+        }
+
+        #result-screen {
+            display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.98);
+            flex-direction: column; align-items: center; justify-content: center; z-index: 100;
+        }
+        .result-card { background: white; padding: 50px; border-radius: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.1); text-align: center; }
+        .result-score { font-size: 7rem; color: var(--primary-color); font-weight: 900; }
+        .btn-group { display: flex; gap: 20px; margin-top: 40px; }
+        .btn { padding: 18px 45px; border-radius: 15px; font-size: 1.1rem; font-weight: bold; cursor: pointer; text-decoration: none; border: none; }
+        .btn-main { background: var(--text-main); color: white; }
+        .btn-sub { background: #eee; color: #333; }
+    </style>
+</head>
+<body>
+
+    <div class="header-stats">
+        <div class="stat-item">TIME: <span id="timer">60</span>s</div>
+        <div class="stat-item">SCORE: <span id="score">0</span></div>
+        <div class="stat-item">MISS: <span id="miss-total">0</span></div>
+    </div>
+
+    <div class="game-canvas" id="canvas">
+        <div id="combo-display">0 COMBO!</div>
+        <div id="kanji-display">準備はいい？</div>
+        <div id="roma-display">Spaceキーでスタート</div>
+    </div>
+
+    <div class="ad-container">
+        <h2 style="font-size: 0.9rem; color: #999; margin: 0 0 10px 0;">[PR]</h2>
+        <div id="ad-slot"></div>
+    </div>
+
+    <div id="result-screen">
+        <div class="result-card">
+            <h2>Game Clear!</h2>
+            <div class="result-score" id="final-score">0</div>
+            <p style="color:#999; margin-bottom:30px;">TOTAL SCORE</p>
+            <div class="btn-group">
+                <a href="record.html" class="btn btn-main">図鑑を見る</a>
+                <button class="btn btn-sub" onclick="location.reload()">もう一度</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const romanMap = {
+            'あ':['a'],'い':['i','yi'],'う':['u','wu'],'え':['e'],'お':['o'],
+            'か':['ka'],'き':['ki'],'く':['ku'],'け':['ke'],'こ':['ko'],
+            'さ':['sa'],'し':['si','shi'],'す':['su'],'せ':['se'],'そ':['so'],
+            'た':['ta'],'ち':['ti','chi'],'つ':['tu','tsu'],'て':['te'],'と':['to'],
+            'な':['na'],'に':['ni'],'ぬ':['nu'],'ね':['ne'],'の':['no'],
+            'は':['ha'],'ひ':['hi'],'ふ':['fu','hu'],'へ':['he'],'ほ':['ho'],
+            'ま':['ma'],'み':['mi'],'む':['mu'],'め':['me'],'も':['mo'],
+            'や':['ya'],'ゆ':['yu'],'よ':['yo'],
+            'ら':['ra'],'り':['ri'],'る':['ru'],'れ':['re'],'ろ':['ro'],
+            'わ':['wa'],'を':['wo'],'ん':['nn','n'],'ー':['-'],
+            'が':['ga'],'ぎ':['gi'],'ぐ':['gu'],'げ':['ge'],'ご':['go'],
+            'ざ':['za'],'じ':['zi','ji'],'ず':['zu'],'ぜ':['ze'],'ぞ':['zo'],
+            'だ':['da'],'ぢ':['di'],'づ':['du'],'で':['de'],'ど':['do'],
+            'ば':['ba'],'び':['bi'],'ぶ':['bu'],'べ':['be'],'ぼ':['bo'],
+            'ぱ':['pa'],'ぴ':['pi'],'ぷ':['pu'],'ぺ':['pe'],'ぽ':['po'],
+            'きゃ':['kya','ki-lya','ki-xyu'],'きゅ':['kyu','ki-lyu','ki-xyu'],'きょ':['kyo','ki-lyo','ki-xyo'],
+            'しゃ':['sya','sha','si-lya'],'しゅ':['syu','shu','si-lyu'],'しょ':['syo','sho','si-lyo'],
+            'ちゃ':['cha','tya','ti-lya'],'ちゅ':['chu','tyu','ti-lyu'],'ちょ':['cho','tyo','ti-lyo'],
+            'にゃ':['nya','ni-lya'],'にゅ':['nyu','ni-lyu'],'にょ':['nyo','ni-lyo'],
+            'ひゃ':['hya','hi-lya'],'ひゅ':['hyu','hi-lyu'],'ひょ':['hyo','hi-lyo'],
+            'みゃ':['mya','mi-lya'],'みゅ':['myu','mi-lyu'],'みょ':['myo','mi-lyo'],
+            'りゃ':['rya','ri-lya'],'りゅ':['ryu','ri-lyu'],'りょ':['ryo','ri-lyo'],
+            'ぎゃ':['gya','gi-lya'],'ぎゅ':['gyu','gi-lyu'],'ぎょ':['gyo','gi-lyo'],
+            'じゃ':['ja','zya','zi-lya'],'じゅ':['ju','zyu','zi-lyu'],'じょ':['jo','zyo','zi-lyo'],
+            'びゃ':['bya','bi-lya'],'びゅ':['byu','bi-lyu'],'びょ':['byo','bi-lyo'],
+            'ぴゃ':['pya','pi-lya'],'ぴゅ':['pyu','pi-lyu'],'ぴょ':['pyo','pi-lyo'],
+            'ぁ':['xa','la'],'ぃ':['xi','li'],'ぅ':['xu','lu'],'ぇ':['xe','le'],'ぉ':['xo','lo'],
+            'ゃ':['xya','lya'],'ゅ':['xyu','lyu'],'ょ':['xyo','lyo'],
+            'っ':['xtu','xtsu','ltu','ltsu']
+        };
+
+const wordList = [
+            { k: "一石二鳥", y: "いっせきにちょう" },
+            { k: "一生懸命", y: "いっしょうけんめい" },
+            { k: "四苦八苦", y: "しくはっく" },
+            { k: "自業自得", y: "じごうじとく" },
+            { k: "温故知新", y: "おんこちしん" },
+            { k: "異口同音", y: "いくどうおん" },
+            { k: "以心伝心", y: "いしんでんしん" },
+            { k: "意味深長", y: "いみしんちょう" },
+            { k: "右往左往", y: "うおうさおう" },
+            { k: "我田引水", y: "がでんいんすい" },
+            { k: "画竜点睛", y: "がりょうてんせい" },
+            { k: "疑心暗鬼", y: "ぎしんあんき" },
+            { k: "急転直下", y: "きゅうてんちょっか" },
+            { k: "弱肉強食", y: "じゃくにくきょうしょく" },
+            { k: "公明正大", y: "こうめいせいだい" },
+            { k: "呉越同舟", y: "ごえつどうしゅう" },
+            { k: "孤立無援", y: "こりつむえん" },
+            { k: "五里霧中", y: "ごりむちゅう" },
+            { k: "言語道断", y: "ごんごどうだん" },
+            { k: "三日坊主", y: "みっかぼうず" },
+            { k: "自作自演", y: "じさくじえん" },
+            { k: "試行錯誤", y: "しこうさくご" },
+            { k: "自由自在", y: "じゆうじざい" },
+            { k: "取捨選択", y: "しゅしゃせんたく" },
+            { k: "順風満帆", y: "じゅんぷうまんぱん" },
+            { k: "心機一転", y: "しんきいってん" },
+            { k: "切磋琢磨", y: "せっさたくま" },
+            { k: "絶体絶命", y: "ぜったいぜつめい" },
+            { k: "千客万来", y: "せんきゃくばんらい" },
+            { k: "先客万来", y: "せんきゃくばんらい" },
+            { k: "千変万化", y: "せんぺんばんか" },
+            { k: "前代未聞", y: "ぜんだいみもん" },
+            { k: "相思相愛", y: "そうしそうあい" },
+            { k: "大器晩成", y: "たいきばんせい" },
+            { k: "泰然自若", y: "たいぜんじじゃく" },
+            { k: "大胆不敵", y: "だいたんふてき" },
+            { k: "他力本願", y: "たりきほんがん" },
+            { k: "単刀直入", y: "たんとうちょくにゅう" },
+            { k: "朝令暮改", y: "ちょうれいぼかい" },
+            { k: "猪突猛進", y: "ちょとつもうしん" },
+            { k: "適材適所", y: "てきざいてきしょ" },
+            { k: "徹頭徹尾", y: "てっとうてつび" },
+            { k: "電光石火", y: "でんこうせっか" },
+            { k: "天真爛漫", y: "てんしんらんまん" },
+            { k: "道聴塗説", y: "どうちょうとせつ" },
+            { k: "独断専行", y: "どくだんせんこう" },
+            { k: "内憂外患", y: "ないゆうがいかん" },
+            { k: "難攻不落", y: "なんこうふらく" },
+            { k: "日進月歩", y: "にっしんげっぽ" },
+            { k: "馬耳東風", y: "ばじとうふう" },
+            { k: "八方美人", y: "はっぽうびじん" },
+            { k: "波乱万丈", y: "はらんばんじょう" },
+            { k: "半信半疑", y: "はんしんはんぎ" },
+            { k: "百戦錬磨", y: "ひゃくせんれんま" },
+            { k: "付和雷同", y: "ふわらいどう" },
+            { k: "粉骨砕身", y: "ふんこつさいしん" },
+            { k: "文武両道", y: "ぶんぶりょうどう" },
+            { k: "傍若無人", y: "ぼうじゃくぶじん" },
+            { k: "本末転倒", y: "ほんまつてんとう" },
+            { k: "無我夢中", y: "むがむちゅう" },
+            { k: "無病息災", y: "むびょうそくさい" },
+            { k: "油断大敵", y: "ゆだんたいてき" },
+            { k: "用意周到", y: "よういしゅうとう" },
+            { k: "臨機応変", y: "りんきおうへん" },
+            { k: "老若男女", y: "ろうにゃくなんにょ" },
+            { k: "一攫千金", y: "いっかくせんきん" },
+            { k: "臥薪嘗胆", y: "がしんしょうたん" },
+            { k: "勧善懲悪", y: "かんぜんちょうあく" },
+            { k: "危機一髪", y: "ききいっぱつ" },
+            { k: "起死回生", y: "きしかいせい" },
+            { k: "喜怒哀楽", y: "きどあいらく" },
+            { k: "興味津々", y: "きょうみしんしん" },
+            { k: "玉石混交", y: "ぎょくせきこんこう" },
+            { k: "近朱必赤", y: "きんしゅひっせき" },
+            { k: "空前絶後", y: "くうぜんぜつご" },
+            { k: "質実剛健", y: "しつじつごうけん" },
+            { k: "縦横無尽", y: "じゅうおうむじん" },
+            { k: "主客転倒", y: "しゅかくてんとう" },
+            { k: "正々堂々", y: "せいせいどうどう" },
+            { k: "青天霹靂", y: "せいてんへきれき" },
+            { k: "清廉潔白", y: "せいれんけっぱく" },
+            { k: "多事多難", y: "たじたなん" },
+            { k: "大願成就", y: "たいがんじょうじゅ" },
+            { k: "朝三暮四", y: "ちょうさんぼし" },
+            { k: "適者生存", y: "てきしゃせいぞん" },
+            { k: "徹宵徹夜", y: "てっしょうてつや" },
+            { k: "転禍為福", y: "てんかいふく" },
+            { k: "天衣無縫", y: "てんいむほう" },
+            { k: "当代随一", y: "とうだいずいいち" },
+            { k: "不言実行", y: "ふげんじっこう" },
+            { k: "不撓不屈", y: "ふとうふくつ" },
+            { k: "不即不離", y: "ふそくふり" },
+            { k: "抱腹絶倒", y: "ほうふくぜっとう" },
+            { k: "満身創痍", y: "まんしんそうい" },
+            { k: "未来永劫", y: "みらいえいごう" },
+            { k: "無味乾燥", y: "むみかんそう" },
+            { k: "明鏡止水", y: "めいきょうしすい" },
+            { k: "面目躍如", y: "めんもくやくじょ" },
+            { k: "勇往邁進", y: "ゆうおうまいしん" },
+            { k: "悠々自適", y: "ゆうゆうじてき" }
+        ];
+
+        let score = 0, totalMiss = 0, combo = 0, timeLeft = 60;
+        let isPlaying = false, timerId = null;
+        let currentKana = "", originalKana = "", solvedRoma = "", inputBuffer = "";
+        let wordStartTime = 0, wordMissCount = 0;
+        let missLocations = {};
+        
+        let isFever = false;
+        let feverTimer = null;
+
+        const kanjiEl = document.getElementById('kanji-display');
+        const romaEl = document.getElementById('roma-display');
+        const scoreEl = document.getElementById('score');
+        const timerEl = document.getElementById('timer');
+        const missEl = document.getElementById('miss-total');
+        const canvasEl = document.getElementById('canvas');
+        const comboEl = document.getElementById('combo-display');
+
+        function getGuideRoma(kana) {
+            let guide = "";
+            let temp = kana;
+            while(temp.length > 0) {
+                let found = false;
+                for(let len=2; len>=1; len--) {
+                    let part = temp.substring(0, len);
+                    if(romanMap[part]) {
+                        guide += romanMap[part][0];
+                        temp = temp.substring(len);
+                        found = true; break;
+                    }
+                }
+                if(!found) { guide += temp[0]; temp = temp.substring(1); }
+            }
+            return guide;
+        }
+
+        window.addEventListener('keydown', e => {
+            if (!isPlaying) {
+                if (e.code === 'Space') { e.preventDefault(); startGame(); }
+                return;
+            }
+
+            if (e.key.length !== 1 || e.key === " ") return;
+            const key = e.key.toLowerCase();
+            let matched = false;
+
+            for (let len = 2; len >= 1; len--) {
+                const targetKana = currentKana.substring(0, len);
+                if (romanMap[targetKana]) {
+                    const options = romanMap[targetKana];
+                    for (const roma of options) {
+                        if (roma.startsWith(inputBuffer + key)) {
+                            matched = true;
+                            inputBuffer += key;
+                            if (inputBuffer === roma) {
+                                solvedRoma += inputBuffer;
+                                currentKana = currentKana.substring(len);
+                                inputBuffer = "";
+                            }
+                            break;
+                        }
+                    }
+                }
+                if (matched) break;
+            }
+
+            if (!matched && currentKana[0] === 'っ' && currentKana.length > 1) {
+                const nextKana = currentKana[1];
+                let nextOptions = romanMap[currentKana.substring(1, 3)] || romanMap[currentKana[1]];
+                if (nextOptions) {
+                    if (key === nextOptions[0][0]) {
+                        solvedRoma += key;
+                        currentKana = currentKana.substring(1);
+                        matched = true;
+                    }
+                }
+            }
+
+            if (matched) {
+                let points = 1;
+                let comboBonus = Math.floor(combo / 10);
+                points += comboBonus;
+                if (isFever) points *= 2;
+                
+                score += points;
+                combo++;
+                scoreEl.textContent = score;
+                
+                if (combo >= 5) {
+                    comboEl.textContent = isFever ? `✨ ${combo} COMBO! ✨` : `${combo} COMBO!`;
+                    comboEl.classList.add('show');
+                }
+
+                if (combo >= 20 && !isFever) {
+                    startFever();
+                }
+
+                if (currentKana.length === 0 && inputBuffer === "") {
+                    const timeTaken = ((Date.now() - wordStartTime) / 1000).toFixed(2);
+                    saveToLibrary(kanjiEl.textContent, originalKana, timeTaken, wordMissCount, missLocations);
+                    nextWord();
+                } else {
+                    updateDisplay();
+                }
+            } else {
+                totalMiss++;
+                wordMissCount++;
+                stopFever(); 
+                combo = 0;
+                missEl.textContent = totalMiss;
+                
+                const solvedLen = originalKana.length - currentKana.length;
+                const missKanaChar = originalKana[solvedLen];
+                missLocations[missKanaChar] = (missLocations[missKanaChar] || 0) + 1;
+
+                comboEl.classList.remove('show');
+                canvasEl.classList.add('shake');
+                setTimeout(() => canvasEl.classList.remove('shake'), 250);
+            }
+        });
+
+        function startFever() {
+            isFever = true;
+            document.body.classList.add('fever-mode');
+            kanjiEl.classList.add('fever-text');
+            comboEl.style.color = "#ffd700";
+            
+            if (feverTimer) clearTimeout(feverTimer);
+            feverTimer = setTimeout(() => {
+                stopFever();
+            }, 8000);
+        }
+
+        function stopFever() {
+            isFever = false;
+            document.body.classList.remove('fever-mode');
+            kanjiEl.classList.remove('fever-text');
+            comboEl.style.color = "var(--secondary-color)";
+            if (feverTimer) clearTimeout(feverTimer);
+        }
+
+        function startGame() {
+            isPlaying = true;
+            score = 0; totalMiss = 0; combo = 0; timeLeft = 60;
+            scoreEl.textContent = "0"; missEl.textContent = "0";
+            stopFever();
+            nextWord();
+            if (timerId) clearInterval(timerId);
+            timerId = setInterval(() => {
+                timeLeft--;
+                timerEl.textContent = timeLeft;
+                if (timeLeft <= 0) endGame();
+            }, 1000);
+        }
+
+        function nextWord() {
+            const data = wordList[Math.floor(Math.random() * wordList.length)];
+            kanjiEl.textContent = data.k;
+            originalKana = data.y;
+            currentKana = data.y;
+            solvedRoma = "";
+            inputBuffer = "";
+            wordStartTime = Date.now();
+            wordMissCount = 0;
+            missLocations = {};
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            let guide = getGuideRoma(currentKana);
+            let currentDisplay = inputBuffer + guide.substring(inputBuffer.length);
+            romaEl.innerHTML = `<span class="char-done">${solvedRoma}</span><span class="char-current">${currentDisplay.charAt(0)}</span><span>${currentDisplay.slice(1)}</span>`;
+        }
+
+        function saveToLibrary(word, kana, time, miss, mLocations) {
+            let history = JSON.parse(localStorage.getItem('typing_records') || '{}');
+            let totalMissLocations = history[word]?.missLocations || {};
+            for (let char in mLocations) {
+                totalMissLocations[char] = (totalMissLocations[char] || 0) + mLocations[char];
+            }
+            if (!history[word] || parseFloat(time) < parseFloat(history[word].time)) {
+                history[word] = { time: time, miss: miss, kana: kana, missLocations: totalMissLocations };
+            } else {
+                history[word].missLocations = totalMissLocations;
+            }
+            localStorage.setItem('typing_records', JSON.stringify(history));
+        }
+
+        function endGame() {
+            isPlaying = false;
+            stopFever();
+            clearInterval(timerId);
+            document.getElementById('result-screen').style.display = 'flex';
+            document.getElementById('final-score').textContent = score;
+        }
+
+        const adList = [
+            '<a href="//af.moshimo.com/af/c/click?a_id=5472673&p_id=1225&pc_id=1925&pl_id=19144" rel="nofollow" referrerpolicy="no-referrer-when-downgrade" attributionsrc><img src="//image.moshimo.com/af-img/0349/000000019144.jpg" width="468" height="60" style="border:none;"></a><img src="//i.moshimo.com/af/i/impression?a_id=5472673&p_id=1225&pc_id=1925&pl_id=19144" width="1" height="1" style="border:none;" loading="lazy">',
+            '<a href="//af.moshimo.com/af/c/click?a_id=5472665&p_id=54&pc_id=54&pl_id=1251" rel="nofollow" referrerpolicy="no-referrer-when-downgrade" attributionsrc><img src="//image.moshimo.com/af-img/0032/000000001251.gif" width="468" height="60" style="border:none;"></a><img src="//i.moshimo.com/af/i/impression?a_id=5472665&p_id=54&pc_id=54&pl_id=1251" width="1" height="1" style="border:none;" loading="lazy">',
+            '<a href="//af.moshimo.com/af/c/click?a_id=5472673&p_id=1225&pc_id=1925&pl_id=18544" rel="nofollow" referrerpolicy="no-referrer-when-downgrade" attributionsrc><img src="//image.moshimo.com/af-img/0349/000000018544.gif" width="468" height="60" style="border:none;"></a><img src="//i.moshimo.com/af/i/impression?a_id=5472673&p_id=1225&pc_id=1925&pl_id=18544" width="1" height="1" style="border:none;" loading="lazy">',
+            '<a href="//af.moshimo.com/af/c/click?a_id=5472682&p_id=5941&pc_id=16548&pl_id=75907" rel="nofollow" referrerpolicy="no-referrer-when-downgrade" attributionsrc><img src="//image.moshimo.com/af-img/5687/000000075907.jpg" width="728" height="90" style="border:none;"></a><img src="//i.moshimo.com/af/i/impression?a_id=5472682&p_id=5941&pc_id=16548&pl_id=75907" width="1" height="1" style="border:none;" loading="lazy">'
+        ];
+
+        function showRandomAd() {
+            const randomIndex = Math.floor(Math.random() * adList.length);
+            const slot = document.getElementById('ad-slot');
+            if(slot) slot.innerHTML = adList[randomIndex];
+        }
+
+        showRandomAd();
+    </script>
+</body>
+</html>
