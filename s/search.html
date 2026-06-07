@@ -579,51 +579,51 @@ const observer = new MutationObserver(() => {
     if (res.dataset.surgeFixed === "1") return;
     if (res.closest('.gsc-adBlock') || res.offsetHeight === 0) return;
 
-    const titles = res.querySelectorAll('.gs-title');
-    const urlElements = res.querySelectorAll('.gs-visibleUrl');
+    const titleBlocks = res.querySelectorAll('.gs-title');
+
+    if (titleBlocks.length === 0) return;
 
     /* =========================
-      ✅ タイトル修正（安全版）
+      🔥 ① 「最初の1個だけ残す」
     ========================= */
-    if (titles.length > 1) {
-      for (let i = 1; i < titles.length; i++) {
-        titles[i].style.display = 'none';
+    titleBlocks.forEach((t, i) => {
+      if (i !== 0) {
+        t.style.display = 'none';
+        t.style.height = '0';
+        t.style.overflow = 'hidden';
       }
-    }
+    });
 
-    const title = titles[0]; // ←これが重要（querySelectorじゃなく配列から取る）
+    const title = titleBlocks[0];
+
+    const url = res.querySelector('.gs-visibleUrl');
 
     /* =========================
-      URL処理
+      🔥 ② URL処理（安全）
     ========================= */
-    if (title && urlElements.length > 0) {
-      const mainUrlEl = urlElements[0];
+    if (title && url && !url.dataset.surgeDone) {
 
-      if (!mainUrlEl.classList.contains('surge-first-url')) {
-        mainUrlEl.classList.add('surge-first-url');
+      url.dataset.surgeDone = "1";
+      url.classList.add('surge-first-url');
 
-        let urlText = mainUrlEl.innerText.trim();
-        let domain = "";
+      let domain = "";
+      try {
+        let u = url.innerText.trim();
+        if (!u.startsWith('http')) u = 'http://' + u;
+        domain = new URL(u).hostname;
+      } catch (e) {}
 
-        try {
-          if (!urlText.startsWith('http')) urlText = 'http://' + urlText;
-          domain = new URL(urlText).hostname;
-        } catch (e) {}
+      if (domain) {
+        const img = document.createElement('img');
+        img.src = `https://www.google.com/s2/favicons?sz=32&domain=${domain}`;
+        img.style.width = "16px";
+        img.style.height = "16px";
+        img.style.marginRight = "8px";
 
-        if (domain && !mainUrlEl.querySelector('img')) {
-          const faviconImg = document.createElement('img');
-          faviconImg.src = `https://www.google.com/s2/favicons?sz=32&domain=${domain}`;
-          faviconImg.style.width = "16px";
-          faviconImg.style.height = "16px";
-          faviconImg.style.marginRight = "8px";
-
-          mainUrlEl.insertBefore(faviconImg, mainUrlEl.firstChild);
-        }
-
-        if (title.parentNode) {
-          title.parentNode.insertBefore(mainUrlEl, title);
-        }
+        url.prepend(img);
       }
+
+      title.parentNode.insertBefore(url, title);
     }
 
     res.dataset.surgeFixed = "1";
