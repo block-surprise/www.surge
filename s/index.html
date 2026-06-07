@@ -220,7 +220,7 @@
   gap: 1rem;
 }
 
-/* Googleニュースっぽいカード */
+
 .news-card {
   display: flex;
   gap: 1rem;
@@ -354,20 +354,16 @@ window.onclick = (e) => {
   if (e.target === appsModal) closeModal();
 };
 </script>
-  <script>
+<script>
 const newsList = document.getElementById("newsList");
 const tabs = document.querySelectorAll(".tab");
 
-// 日本ニュースRSS（NHK系）
 const feeds = {
-  latest: "https://feeds.nhk.or.jp/rss/news/cat0.xml",
-  japan: "https://feeds.nhk.or.jp/rss/news/cat1.xml",
-  tech: "https://feeds.nhk.or.jp/rss/news/cat3.xml",
-  sports: "https://feeds.nhk.or.jp/rss/news/cat4.xml"
+  latest: "https://www3.nhk.or.jp/rss/news/cat0.xml",
+  japan: "https://www3.nhk.or.jp/rss/news/cat1.xml",
+  tech: "https://www3.nhk.or.jp/rss/news/cat3.xml",
+  sports: "https://www3.nhk.or.jp/rss/news/cat4.xml"
 };
-
-// RSS→JSON変換API（安定）
-const proxy = "https://api.rss2json.com/v1/api.json?rss_url=";
 
 let currentKey = "latest";
 
@@ -375,25 +371,39 @@ async function fetchNews(key) {
   newsList.innerHTML = "読み込み中...";
 
   try {
-    const url = proxy + encodeURIComponent(feeds[key]);
+    const url = feeds[key];
 
     const res = await fetch(url);
-    const data = await res.json();
+    const text = await res.text();
 
-    const items = data.items || [];
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(text, "text/xml");
+
+    const items = xml.querySelectorAll("item");
 
     newsList.innerHTML = "";
 
-    items.forEach(item => {
+    if (!items.length) {
+      newsList.innerHTML = "ニュースが取得できませんでした";
+      return;
+    }
+
+    items.forEach((item, i) => {
+      if (i > 10) return;
+
+      const title = item.querySelector("title")?.textContent;
+      const link = item.querySelector("link")?.textContent;
+      const date = item.querySelector("pubDate")?.textContent;
+
       const a = document.createElement("a");
-      a.href = item.link;
+      a.href = link;
       a.target = "_blank";
       a.className = "news-card";
 
       a.innerHTML = `
         <div class="news-content">
-          <div class="news-title">${item.title}</div>
-          <div class="news-meta">${new Date(item.pubDate).toLocaleString("ja-JP")}</div>
+          <div class="news-title">${title}</div>
+          <div class="news-meta">${date ? new Date(date).toLocaleString("ja-JP") : ""}</div>
         </div>
       `;
 
@@ -402,23 +412,21 @@ async function fetchNews(key) {
 
   } catch (e) {
     console.error(e);
-    newsList.innerHTML = "ニュース取得に失敗しました";
+    newsList.innerHTML = "取得エラー（CORSの可能性）";
   }
 }
 
-// タブ
+// タブ切替
 tabs.forEach(tab => {
   tab.addEventListener("click", () => {
     tabs.forEach(t => t.classList.remove("active"));
     tab.classList.add("active");
 
-    currentKey = tab.dataset.q === "latest"
-      ? "latest"
-      : tab.dataset.q === "Japan news"
-      ? "japan"
-      : tab.dataset.q === "technology"
-      ? "tech"
-      : "sports";
+    currentKey =
+      tab.dataset.q === "latest" ? "latest" :
+      tab.dataset.q === "Japan news" ? "japan" :
+      tab.dataset.q === "technology" ? "tech" :
+      "sports";
 
     fetchNews(currentKey);
   });
