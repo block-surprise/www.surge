@@ -324,39 +324,40 @@
   </div>
 
   <script>
-    const queryInput = document.getElementById("query");
-    const appsModal = document.getElementById("appsModal");
-    const openBtn = document.getElementById("openApps");
-    const closeBtn = document.getElementById("closeApps");
+const queryInput = document.getElementById("query");
+const appsModal = document.getElementById("appsModal");
+const openBtn = document.getElementById("openApps");
+const closeBtn = document.getElementById("closeApps");
 
-    // 検索実行
-    queryInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        const q = queryInput.value.trim();
-        if (q) {
-          window.location.href = `/s/search?q=${encodeURIComponent(q)}`;
-        }
-      }
-    });
+queryInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    const q = queryInput.value.trim();
+    if (q) {
+      window.location.href = `/s/search?q=${encodeURIComponent(q)}`;
+    }
+  }
+});
 
-    // モーダル表示
-    openBtn.onclick = () => {
-      appsModal.style.display = "flex";
-      document.body.style.overflow = "hidden"; // 背景スクロール固定
-    };
+openBtn.onclick = () => {
+  appsModal.style.display = "flex";
+  document.body.style.overflow = "hidden";
+};
 
-    // モーダル閉じる
-    const closeModal = () => {
-      appsModal.style.display = "none";
-      document.body.style.overflow = "";
-    };
-    closeBtn.onclick = closeModal;
-    window.onclick = (e) => { if (e.target === appsModal) closeModal(); };
-<script>
+const closeModal = () => {
+  appsModal.style.display = "none";
+  document.body.style.overflow = "";
+};
+
+closeBtn.onclick = closeModal;
+
+window.onclick = (e) => {
+  if (e.target === appsModal) closeModal();
+};
+</script>
+  <script>
 const newsList = document.getElementById("newsList");
 const tabs = document.querySelectorAll(".tab");
 
-// 日本固定クエリ（ここがポイント）
 let currentQuery = "Japan OR Tokyo OR 日本";
 
 async function fetchNews(query) {
@@ -365,7 +366,7 @@ async function fetchNews(query) {
   const url =
     "https://api.gdeltproject.org/api/v2/doc/doc?query=" +
     encodeURIComponent(query) +
-    "&mode=ArtList&format=json&maxrecords=10&sort=HybridRel&format=json";
+    "&mode=ArtList&format=json&maxrecords=10&sort=HybridRel";
 
   const res = await fetch(url);
   const data = await res.json();
@@ -389,9 +390,7 @@ async function fetchNews(query) {
       <img class="news-thumb" src="${img}" onerror="this.style.display='none'">
       <div class="news-content">
         <div class="news-title">${a.title}</div>
-        <div class="news-meta">
-          ${a.sourceCountry || "Japan"} ・ ${a.seendate || ""}
-        </div>
+        <div class="news-meta">${a.seendate || ""}</div>
       </div>
     `;
 
@@ -399,22 +398,20 @@ async function fetchNews(query) {
   });
 }
 
-// タブ（日本固定なので見た目だけ）
+// タブ
 tabs.forEach(tab => {
   tab.addEventListener("click", () => {
     tabs.forEach(t => t.classList.remove("active"));
     tab.classList.add("active");
-
-    // 日本ニュースだけ再取得
     fetchNews(currentQuery);
   });
 });
 
-// 初期ロード
+// 初回
 fetchNews(currentQuery);
 
-// 自動更新（5分）
-setInterval(() => fetchNews(currentQuery), 5 * 60 * 1000);
+// 自動更新
+setInterval(() => fetchNews(currentQuery), 300000);
 </script>
 </body>
 </html>
