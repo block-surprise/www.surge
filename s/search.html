@@ -580,24 +580,21 @@ const observer = new MutationObserver(() => {
     if (res.closest('.gsc-adBlock') || res.offsetHeight === 0) return;
 
     const titles = res.querySelectorAll('.gs-title');
-
-    /* =========================
-      🔥 ① タイトル完全整理
-    ========================= */
-
-    if (titles.length > 0) {
-      // 1個目以外を物理削除（display:noneじゃ弱い）
-      for (let i = 1; i < titles.length; i++) {
-        titles[i].remove();
-      }
-    }
-
-    const title = res.querySelector('.gs-title');
-
     const urlElements = res.querySelectorAll('.gs-visibleUrl');
 
     /* =========================
-      🔥 ② URL整形
+      ✅ タイトル修正（安全版）
+    ========================= */
+    if (titles.length > 1) {
+      for (let i = 1; i < titles.length; i++) {
+        titles[i].style.display = 'none';
+      }
+    }
+
+    const title = titles[0]; // ←これが重要（querySelectorじゃなく配列から取る）
+
+    /* =========================
+      URL処理
     ========================= */
     if (title && urlElements.length > 0) {
       const mainUrlEl = urlElements[0];
@@ -613,15 +610,14 @@ const observer = new MutationObserver(() => {
           domain = new URL(urlText).hostname;
         } catch (e) {}
 
-        if (domain && !mainUrlEl.querySelector('.surge-favicon-box')) {
-          const faviconBox = document.createElement('div');
-          faviconBox.className = 'surge-favicon-box';
+        if (domain && !mainUrlEl.querySelector('img')) {
+          const faviconImg = document.createElement('img');
+          faviconImg.src = `https://www.google.com/s2/favicons?sz=32&domain=${domain}`;
+          faviconImg.style.width = "16px";
+          faviconImg.style.height = "16px";
+          faviconImg.style.marginRight = "8px";
 
-          const img = document.createElement('img');
-          img.src = `https://www.google.com/s2/favicons?sz=32&domain=${domain}`;
-
-          faviconBox.appendChild(img);
-          mainUrlEl.insertBefore(faviconBox, mainUrlEl.firstChild);
+          mainUrlEl.insertBefore(faviconImg, mainUrlEl.firstChild);
         }
 
         if (title.parentNode) {
@@ -633,7 +629,6 @@ const observer = new MutationObserver(() => {
     res.dataset.surgeFixed = "1";
   });
 });
-
     observer.observe(document.getElementById('webResultsArea'), { childList: true, subtree: true });
 
     document.getElementById('searchForm').addEventListener('submit', (e) => {
