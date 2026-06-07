@@ -576,32 +576,30 @@ const observer = new MutationObserver(() => {
   const results = document.querySelectorAll('.gsc-webResult');
 
   results.forEach(res => {
-    if (res.dataset.surgeFixed === "1") return;
+    if (res.dataset.surgeDone === "1") return;
     if (res.closest('.gsc-adBlock') || res.offsetHeight === 0) return;
 
-    const titleBlocks = res.querySelectorAll('.gs-title');
-
-    if (titleBlocks.length === 0) return;
-
     /* =========================
-      🔥 ① 「最初の1個だけ残す」
+      🔥 ① タイトルは「1つだけ採用」
     ========================= */
-    titleBlocks.forEach((t, i) => {
-      if (i !== 0) {
-        t.style.display = 'none';
-        t.style.height = '0';
-        t.style.overflow = 'hidden';
+    const titles = Array.from(res.querySelectorAll('.gs-title'));
+
+    if (titles.length === 0) return;
+
+    const mainTitle = titles.find(t => t.offsetParent !== null) || titles[0];
+
+    titles.forEach(t => {
+      if (t !== mainTitle) {
+        t.remove(); // ← displayじゃなく完全削除（ここ重要）
       }
     });
 
-    const title = titleBlocks[0];
-
+    /* =========================
+      🔥 ② URL処理
+    ========================= */
     const url = res.querySelector('.gs-visibleUrl');
 
-    /* =========================
-      🔥 ② URL処理（安全）
-    ========================= */
-    if (title && url && !url.dataset.surgeDone) {
+    if (mainTitle && url && !url.dataset.surgeDone) {
 
       url.dataset.surgeDone = "1";
       url.classList.add('surge-first-url');
@@ -613,20 +611,19 @@ const observer = new MutationObserver(() => {
         domain = new URL(u).hostname;
       } catch (e) {}
 
-      if (domain) {
+      if (domain && !url.querySelector('img')) {
         const img = document.createElement('img');
         img.src = `https://www.google.com/s2/favicons?sz=32&domain=${domain}`;
         img.style.width = "16px";
         img.style.height = "16px";
         img.style.marginRight = "8px";
-
         url.prepend(img);
       }
 
-      title.parentNode.insertBefore(url, title);
+      mainTitle.parentNode.insertBefore(url, mainTitle);
     }
 
-    res.dataset.surgeFixed = "1";
+    res.dataset.surgeDone = "1";
   });
 });
     observer.observe(document.getElementById('webResultsArea'), { childList: true, subtree: true });
