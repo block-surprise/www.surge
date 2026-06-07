@@ -363,39 +363,49 @@ let currentQuery = "Japan OR Tokyo OR 日本";
 async function fetchNews(query) {
   newsList.innerHTML = "読み込み中...";
 
-  const url =
-    "https://api.gdeltproject.org/api/v2/doc/doc?query=" +
-    encodeURIComponent(query) +
-    "&mode=ArtList&format=json&maxrecords=10&sort=HybridRel";
+  try {
+    const url =
+      "https://api.gdeltproject.org/api/v2/doc/doc?query=" +
+      encodeURIComponent(query) +
+      "&mode=ArtList&format=json&maxrecords=10&sort=HybridRel";
 
-  const res = await fetch(url);
-  const data = await res.json();
+    const res = await fetch(url);
+    const data = await res.json();
 
-  newsList.innerHTML = "";
+    console.log("APIレスポンス:", data); // ←重要（デバッグ）
 
-  if (!data.articles) {
-    newsList.innerHTML = "<div>ニュースが取得できませんでした</div>";
-    return;
+    const articles = data.articles || [];
+
+    if (articles.length === 0) {
+      newsList.innerHTML = "<div>ニュースが見つかりませんでした</div>";
+      return;
+    }
+
+    newsList.innerHTML = "";
+
+    articles.forEach(a => {
+      const card = document.createElement("a");
+      card.href = a.url;
+      card.target = "_blank";
+      card.className = "news-card";
+
+      const img = a.socialimage || "";
+
+      card.innerHTML = `
+        <img class="news-thumb" src="${img}" onerror="this.style.display='none'">
+        <div class="news-content">
+          <div class="news-title">${a.title || "No title"}</div>
+          <div class="news-meta">${a.seendate || ""}</div>
+        </div>
+      `;
+
+      newsList.appendChild(card);
+    });
+
+  } catch (e) {
+    console.error(e);
+    newsList.innerHTML = "ニュース取得エラー（API不安定）";
   }
-
-  data.articles.forEach(a => {
-    const card = document.createElement("a");
-    card.href = a.url;
-    card.target = "_blank";
-    card.className = "news-card";
-
-    const img = a.socialimage || "";
-
-    card.innerHTML = `
-      <img class="news-thumb" src="${img}" onerror="this.style.display='none'">
-      <div class="news-content">
-        <div class="news-title">${a.title}</div>
-        <div class="news-meta">${a.seendate || ""}</div>
-      </div>
-    `;
-
-    newsList.appendChild(card);
-  });
 }
 
 // タブ
@@ -410,7 +420,7 @@ tabs.forEach(tab => {
 // 初回
 fetchNews(currentQuery);
 
-// 自動更新
+// 5分更新
 setInterval(() => fetchNews(currentQuery), 300000);
 </script>
 </body>
