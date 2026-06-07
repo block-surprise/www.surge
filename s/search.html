@@ -277,6 +277,21 @@
       .left-column { width: 100%; }
       .right-column { max-width: 100%; }
     }
+    .gsc-webResult .gs-title {
+  display: block !important;
+}
+
+/* Googleが出す“重複タイトル系ノード”を全部無効化 */
+.gsc-webResult .gs-title ~ .gs-title,
+.gsc-webResult td .gs-title + .gs-title,
+.gsc-webResult .gs-title:not(:first-of-type) {
+  display: none !important;
+}
+
+/* リンクの二重表示も抑制 */
+.gsc-webResult a.gs-title + a.gs-title {
+  display: none !important;
+}
   </style>
 </head>
 <body>
@@ -579,28 +594,15 @@ const observer = new MutationObserver(() => {
     if (res.dataset.surgeDone === "1") return;
     if (res.closest('.gsc-adBlock') || res.offsetHeight === 0) return;
 
-    /* =========================
-      🔥 ① タイトルは「1つだけ採用」
-    ========================= */
-    const titles = Array.from(res.querySelectorAll('.gs-title'));
-
-    if (titles.length === 0) return;
-
-    const mainTitle = titles.find(t => t.offsetParent !== null) || titles[0];
-
-    titles.forEach(t => {
-      if (t !== mainTitle) {
-        t.remove(); // ← displayじゃなく完全削除（ここ重要）
-      }
-    });
-
-    /* =========================
-      🔥 ② URL処理
-    ========================= */
     const url = res.querySelector('.gs-visibleUrl');
+    const title = res.querySelector('.gs-title');
 
-    if (mainTitle && url && !url.dataset.surgeDone) {
+    if (!title || !url) return;
 
+    /* =========================
+      URLだけ処理（安全領域）
+    ========================= */
+    if (!url.dataset.surgeDone) {
       url.dataset.surgeDone = "1";
       url.classList.add('surge-first-url');
 
@@ -620,7 +622,7 @@ const observer = new MutationObserver(() => {
         url.prepend(img);
       }
 
-      mainTitle.parentNode.insertBefore(url, mainTitle);
+      title.parentNode.insertBefore(url, title);
     }
 
     res.dataset.surgeDone = "1";
