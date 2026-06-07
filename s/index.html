@@ -358,53 +358,51 @@ window.onclick = (e) => {
 const newsList = document.getElementById("newsList");
 const tabs = document.querySelectorAll(".tab");
 
-let currentQuery = "Japan OR Tokyo OR 日本";
+// 日本ニュースRSS（NHK系）
+const feeds = {
+  latest: "https://feeds.nhk.or.jp/rss/news/cat0.xml",
+  japan: "https://feeds.nhk.or.jp/rss/news/cat1.xml",
+  tech: "https://feeds.nhk.or.jp/rss/news/cat3.xml",
+  sports: "https://feeds.nhk.or.jp/rss/news/cat4.xml"
+};
 
-async function fetchNews(query) {
+// RSS→JSON変換API（安定）
+const proxy = "https://api.rss2json.com/v1/api.json?rss_url=";
+
+let currentKey = "latest";
+
+async function fetchNews(key) {
   newsList.innerHTML = "読み込み中...";
 
   try {
-    const url =
-      "https://api.gdeltproject.org/api/v2/doc/doc?query=" +
-      encodeURIComponent(query) +
-      "&mode=ArtList&format=json&maxrecords=10&sort=HybridRel";
+    const url = proxy + encodeURIComponent(feeds[key]);
 
     const res = await fetch(url);
     const data = await res.json();
 
-    console.log("APIレスポンス:", data); // ←重要（デバッグ）
-
-    const articles = data.articles || [];
-
-    if (articles.length === 0) {
-      newsList.innerHTML = "<div>ニュースが見つかりませんでした</div>";
-      return;
-    }
+    const items = data.items || [];
 
     newsList.innerHTML = "";
 
-    articles.forEach(a => {
-      const card = document.createElement("a");
-      card.href = a.url;
-      card.target = "_blank";
-      card.className = "news-card";
+    items.forEach(item => {
+      const a = document.createElement("a");
+      a.href = item.link;
+      a.target = "_blank";
+      a.className = "news-card";
 
-      const img = a.socialimage || "";
-
-      card.innerHTML = `
-        <img class="news-thumb" src="${img}" onerror="this.style.display='none'">
+      a.innerHTML = `
         <div class="news-content">
-          <div class="news-title">${a.title || "No title"}</div>
-          <div class="news-meta">${a.seendate || ""}</div>
+          <div class="news-title">${item.title}</div>
+          <div class="news-meta">${new Date(item.pubDate).toLocaleString("ja-JP")}</div>
         </div>
       `;
 
-      newsList.appendChild(card);
+      newsList.appendChild(a);
     });
 
   } catch (e) {
     console.error(e);
-    newsList.innerHTML = "ニュース取得エラー（API不安定）";
+    newsList.innerHTML = "ニュース取得に失敗しました";
   }
 }
 
@@ -413,15 +411,24 @@ tabs.forEach(tab => {
   tab.addEventListener("click", () => {
     tabs.forEach(t => t.classList.remove("active"));
     tab.classList.add("active");
-    fetchNews(currentQuery);
+
+    currentKey = tab.dataset.q === "latest"
+      ? "latest"
+      : tab.dataset.q === "Japan news"
+      ? "japan"
+      : tab.dataset.q === "technology"
+      ? "tech"
+      : "sports";
+
+    fetchNews(currentKey);
   });
 });
 
 // 初回
-fetchNews(currentQuery);
+fetchNews(currentKey);
 
-// 5分更新
-setInterval(() => fetchNews(currentQuery), 300000);
+// 自動更新
+setInterval(() => fetchNews(currentKey), 300000);
 </script>
 </body>
 </html>
