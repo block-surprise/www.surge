@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SURGE</title>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3571574988222927"
+     crossorigin="anonymous"></script>
+  <meta name="google-site-verification" content="QzpufK8Cl_B7crFUTFlAgQPzxa3RfE3NILhwN_26cwk" />
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    :root {
+      --bg: #fdfdfd;
+      --text: #333;
+      --muted: #888;
+      --border: #d9d9d9;
+      --accent: #4da6ff;
+      --shadow: rgba(0,0,0,0.06);
+    }
+    * { 
+      box-sizing: border-box; 
+      -webkit-tap-highlight-color: transparent; /* タップ時の青い枠を消す */
+    }
+    html, body { 
+      height: 100%; 
+      overflow: hidden; /* スクロール跳ね返り防止 */
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      /* 日本語フォントを優先 */
+      font-family: "Hiragino Kaku Gothic ProN", "ヒラギノ角ゴ ProN W3", "Yu Gothic", "游ゴシック", "Meiryo", "メイリオ", sans-serif;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 右上のバー */
+    .topbar {
+      position: absolute;
+      top: env(safe-area-inset-top, 16px); /* iPhoneのノッチ対策 */
+      right: 16px;
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      z-index: 10;
+    }
+
+    /* AI ボタン（SURGE PROへのリンク） */
+    .ai-btn {
+      padding: 12px;
+      background: transparent;
+      border: none;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #000;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    /* 設定ボタン */
+    .settings-btn {
+      padding: 12px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .settings-btn i {
+      font-size: 1.6rem;
+      color: #000;
+    }
+
+    /* 中央コンテンツ */
+    .center {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 1.5rem;
+      margin-top: -10vh; /* 少し上に配置して視認性アップ */
+    }
+
+    h1 {
+      margin: 0 0 .1rem;
+      font-weight: 800;
+      font-size: clamp(2.5rem, 10vw, 3.4rem); /* 画面幅に合わせて可変 */
+      letter-spacing: .08em;
+      color: #333;
+    }
+
+    .subtitle {
+      margin: 0 0 2.5rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+      letter-spacing: 0.02em;
+    }
+
+    /* 検索入力欄：モバイルで押しやすく */
+    .search-container {
+      width: 100%;
+      max-width: 640px;
+      position: relative;
+    }
+
+    #query {
+      width: 100%;
+      padding: 1rem 1.4rem;
+      font-size: 1.1rem; /* 16px以上にすることでiOSの自動ズームを防止 */
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      background: #fff;
+      box-shadow: 0 4px 16px var(--shadow);
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    #query:focus {
+      border-color: var(--accent);
+    }
+
+    /* モーダル：スマホで見やすい下部シート風 */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.4);
+      display: none;
+      align-items: flex-end; /* 下から出すスタイル */
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal {
+      width: 100%;
+      max-width: 500px;
+      background: #fff;
+      border-radius: 24px 24px 0 0;
+      padding-bottom: env(safe-area-inset-bottom, 20px);
+      animation: slideUp 0.3s ease-out;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .modal-header {
+      padding: 1.2rem 1.5rem;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-body { padding: 2rem 1.5rem; }
+    
+    .list {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+    .app-item {
+      text-decoration: none;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .app-item span {
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    .app-icon-placeholder {
+      width: 60px; /* 少し大きくしてタップしやすく */
+      height: 60px;
+      background: #f8f9fa;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a href="https://surge.ad-hub.f5.si/ai/pro" class="ai-btn">SURGE PRO</a>
+    <button class="settings-btn" id="openApps" aria-label="メニュー">
+      <i class="fa-solid fa-grip"></i>
+    </button>
+  </div>
+
+  <main class="center">
+    <h1>SURGE</h1>
+    <p class="subtitle">光のように、知をたどる。</p>
+    <div class="search-container">
+      <input id="query" type="text" placeholder="検索キーワードを入力…" inputmode="search" autocomplete="off" spellcheck="false"/>
+    </div>
+  </main>
+
+  <div class="modal-backdrop" id="appsModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span style="font-weight:600; font-size: 1.1rem;">その他のアプリ</span>
+        <button id="closeApps" style="border:none; background:none; cursor:pointer; font-size:1.5rem; color: var(--muted);">✕</button>
+      </div>
+<div class="modal-body">
+  <div class="list">
+    <a class="app-item" href="/memo">
+      <div class="app-icon-placeholder"><i class="fa-solid fa-pen-to-square"></i></div>
+      <span>メモ</span>
+    </a>
+    <a class="app-item" href="/todo">
+      <div class="app-icon-placeholder"><i class="fa-solid fa-check-double"></i></div>
+      <span>やること</span>
+    </a>
+    <a class="app-item" href="/timer">
+      <div class="app-icon-placeholder"><i class="fa-solid fa-stopwatch"></i></div>
+      <span>タイマー</span>
+    </a>
+    <a class="app-item" href="https://surge.ad-hub.f5.si/dictionary">
+      <div class="app-icon-placeholder"><i class="fa-solid fa-book"></i></div>
+      <span>辞書</span>
+    </a>
+  </div>
+</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const queryInput = document.getElementById("query");
+    const appsModal = document.getElementById("appsModal");
+    const openBtn = document.getElementById("openApps");
+    const closeBtn = document.getElementById("closeApps");
+
+    // 検索実行
+    queryInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        const q = queryInput.value.trim();
+        if (q) {
+          window.location.href = `/search?q=${encodeURIComponent(q)}`;
+        }
+      }
+    });
+
+    // モーダル表示
+    openBtn.onclick = () => {
+      appsModal.style.display = "flex";
+      document.body.style.overflow = "hidden"; // 背景スクロール固定
+    };
+
+    // モーダル閉じる
+    const closeModal = () => {
+      appsModal.style.display = "none";
+      document.body.style.overflow = "";
+    };
+    closeBtn.onclick = closeModal;
+    window.onclick = (e) => { if (e.target === appsModal) closeModal(); };
+  </script>
+
+</body>
+</html>
