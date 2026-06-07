@@ -576,27 +576,30 @@ const observer = new MutationObserver(() => {
   const results = document.querySelectorAll('.gsc-webResult');
 
   results.forEach(res => {
-    if (res.querySelector('.surge-first-url')) return;
-    if (res.closest('.gsc-adBlock') || res.style.display === 'none' || res.offsetHeight === 0) return;
+    if (res.dataset.surgeFixed === "1") return;
+    if (res.closest('.gsc-adBlock') || res.offsetHeight === 0) return;
 
-    const urlElements = res.querySelectorAll('.gs-visibleUrl');
     const titles = res.querySelectorAll('.gs-title');
 
-    const titleElement = res.querySelector('.gs-title');
-
     /* =========================
-       ✅ ① タイトル重複を完全排除
+      🔥 ① タイトル完全整理
     ========================= */
-    if (titles.length > 1) {
+
+    if (titles.length > 0) {
+      // 1個目以外を物理削除（display:noneじゃ弱い）
       for (let i = 1; i < titles.length; i++) {
-        titles[i].style.display = 'none';
+        titles[i].remove();
       }
     }
 
+    const title = res.querySelector('.gs-title');
+
+    const urlElements = res.querySelectorAll('.gs-visibleUrl');
+
     /* =========================
-       ② URL＋favicon処理（既存）
+      🔥 ② URL整形
     ========================= */
-    if (urlElements.length > 0 && titleElement) {
+    if (title && urlElements.length > 0) {
       const mainUrlEl = urlElements[0];
 
       if (!mainUrlEl.classList.contains('surge-first-url')) {
@@ -606,31 +609,28 @@ const observer = new MutationObserver(() => {
         let domain = "";
 
         try {
-          let parseUrl = urlText;
-          if (!parseUrl.startsWith('http')) parseUrl = 'http://' + parseUrl;
-          domain = new URL(parseUrl).hostname;
-        } catch (e) {
-          domain = "";
-        }
+          if (!urlText.startsWith('http')) urlText = 'http://' + urlText;
+          domain = new URL(urlText).hostname;
+        } catch (e) {}
 
         if (domain && !mainUrlEl.querySelector('.surge-favicon-box')) {
           const faviconBox = document.createElement('div');
           faviconBox.className = 'surge-favicon-box';
 
-          const faviconImg = document.createElement('img');
-          faviconImg.src = `https://www.google.com/s2/favicons?sz=32&domain=${domain}`;
-          faviconImg.alt = "favicon";
+          const img = document.createElement('img');
+          img.src = `https://www.google.com/s2/favicons?sz=32&domain=${domain}`;
 
-          faviconBox.appendChild(faviconImg);
+          faviconBox.appendChild(img);
           mainUrlEl.insertBefore(faviconBox, mainUrlEl.firstChild);
         }
 
-        /* URLをタイトルの上へ移動 */
-        if (titleElement.parentNode) {
-          titleElement.parentNode.insertBefore(mainUrlEl, titleElement);
+        if (title.parentNode) {
+          title.parentNode.insertBefore(mainUrlEl, title);
         }
       }
     }
+
+    res.dataset.surgeFixed = "1";
   });
 });
 
