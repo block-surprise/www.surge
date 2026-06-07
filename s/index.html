@@ -23,10 +23,11 @@
       box-sizing: border-box; 
       -webkit-tap-highlight-color: transparent; /* タップ時の青い枠を消す */
     }
-    html, body { 
-      height: 100%; 
-      overflow: hidden; /* スクロール跳ね返り防止 */
-    }
+html, body { 
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
     body {
       margin: 0;
       background: var(--bg);
