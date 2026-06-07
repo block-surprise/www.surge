@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>SURGE - 検索結果</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/1.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="/1.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-D6SC2D5KK4"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-D6SC2D5KK4');
+  </script>
+  
+  <style>
+    :root { 
+      --accent: #1a0dab; 
+      --accent-hover: #150981;
+      --bg: #ffffff; 
+      --card-bg: #ffffff;
+      --border-color: #dadce0; 
+      --text-main: #202124; 
+      --text-sub: #4d5156; 
+      --search-width: 652px; 
+    }
+    
+    body { 
+      margin: 0; 
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, Arial, sans-serif; 
+      background: var(--bg); 
+      color: var(--text-main); 
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .header-wrapper {
+      position: sticky;
+      top: 0;
+      background: #fff;
+      border-bottom: 1px solid #ebebeb;
+      padding: 20px 0 0 0;
+      z-index: 100;
+    }
+    
+    .main-contents {
+      max-width: 1200px;
+      padding-left: 160px; 
+      padding-right: 20px;
+      box-sizing: border-box;
+    }
+
+    .search-container {
+      max-width: 692px;
+      margin-bottom: 12px;
+    }
+
+    #searchInput { 
+      width: 100%; 
+      padding: 12px 28px; 
+      font-size: 16px; 
+      border-radius: 24px; 
+      border: 1px solid #dfe1e5; 
+      box-shadow: none;
+      outline: none; 
+      box-sizing: border-box; 
+      transition: box-shadow 0.2s;
+    }
+    #searchInput:focus, #searchInput:hover {
+      border-color: rgba(0,0,0,0);
+      box-shadow: 0 1px 6px rgba(32,33,36,0.28);
+    }
+
+    .search-tabs { 
+      display: flex; 
+      gap: 20px; 
+      font-size: 14px; 
+      color: var(--text-sub); 
+      overflow-x: auto; 
+      white-space: nowrap;
+      max-width: var(--search-width);
+    }
+    .tab { 
+      cursor: pointer; 
+      padding: 8px 2px 12px 2px;
+      border-bottom: 3px solid transparent; 
+      transition: color 0.2s; 
+      flex-shrink: 0; 
+    }
+    .tab:hover { color: #1a73e8; }
+    .tab.active { color: #1a73e8; border-bottom: 3px solid #1a73e8; font-weight: 500; }
+    
+    .content-body {
+      margin-top: 24px;
+      display: flex;
+      gap: 60px;
+    }
+
+    .left-column {
+      width: var(--search-width);
+      flex-shrink: 0;
+    }
+
+    .right-column {
+      flex: 1;
+      max-width: 368px;
+    }
+    
+    .utility-card, #aiSummaryBox, #aiModeContainer {
+      background: var(--card-bg); 
+      border: 1px solid var(--border-color); 
+      border-radius: 12px; 
+      padding: 20px; 
+      margin-bottom: 24px; 
+      box-shadow: 0 1px 6px rgba(32,33,36,0.05);
+      box-sizing: border-box;
+    }
+    .utility-card { display: none; overflow: hidden; padding: 0; }
+
+    .card-label { font-size: 12px; color: var(--text-sub); text-transform: uppercase; padding: 16px 20px 8px; font-weight: 600; letter-spacing: 0.5px; }
+    #dictIframe { width: 100%; height: 350px; border: none; display: block; }
+    .conv-flex { display: flex; align-items: center; gap: 15px; padding: 0 20px 20px; }
+    .conv-group { flex: 1; }
+    .conv-input { width: 100%; border: none; border-bottom: 2px solid #eee; font-size: 24px; outline: none; font-weight: bold; color: #1a73e8; background: transparent; }
+    .trans-area { display: flex; gap: 20px; padding: 0 20px 20px; align-items: flex-start; }
+    .trans-textarea { flex: 1; border: none; font-size: 16px; outline: none; resize: none; font-family: inherit; background: transparent; }
+
+    #aiSummaryBox {
+      background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
+      border-color: #dadce0;
+    }
+    .ai-badge { 
+      background: linear-gradient(135deg, #1a73e8, #a777e3); 
+      color: white; 
+      padding: 4px 12px; 
+      border-radius: 8px; 
+      font-size: 12px; 
+      font-weight: bold; 
+      margin-bottom: 14px; 
+      display: inline-block; 
+    }
+    #aiSummaryContent { line-height: 1.6; color: var(--text-main); font-size: 15px; }
+    
+    #aiModeContainer { display: none; }
+    #aiChatHistory { max-height: 500px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+    .ai-bubble, .user-bubble { padding: 12px 16px; border-radius: 12px; max-width: 85%; line-height: 1.5; font-size: 15px; }
+    .ai-bubble { background: #f1f3f4; align-self: flex-start; color: var(--text-main); }
+    .user-bubble { background: #e8f0fe; color: #1967d2; align-self: flex-end; }
+    .chat-input-group { display: flex; gap: 10px; margin-top: 20px; }
+    .chat-input-style { flex: 1; padding: 12px 20px; border-radius: 24px; border: 1px solid #dadce0; outline: none; font-size: 15px; }
+    .chat-input-style:focus { border-color: #1a73e8; }
+    .chat-send-btn { background: #1a73e8; color: white; border: none; padding: 0 24px; border-radius: 24px; font-weight: 500; cursor: pointer; }
+
+    #webResultsArea {
+      width: 100%;
+    }
+
+    /* --- 🌟 検索結果のデザインバグ修正 🌟 --- */
+    .gsc-webResult {
+      padding: 0 0 20px 0 !important; /* サイトごとの間隔を適正（狭め）に設定 */
+      margin: 0 !important;
+    }
+    
+    /* Google CSEが自動付与する不要な内部テーブルやコンテナの巨大な余白をリセット */
+    .gsc-webResult table, .gs-webResult table {
+      margin-bottom: 0 !important;
+      margin-top: 0 !important;
+      border-spacing: 0 !important;
+    }
+    .gsc-table-result {
+      margin-bottom: 0 !important;
+      padding: 0 !important;
+    }
+
+    /* 最上部に移動させた「ファビコン＋本物URL」 */
+    .gs-webResult .surge-first-url {
+      display: inline-flex !important;
+      align-items: center;
+      gap: 12px;
+      color: #202124 !important;
+      font-size: 14px !important;
+      margin-top: 4px !important;
+      margin-bottom: 4px !important;
+      padding: 0 !important;
+      width: 100%;
+    }
+
+    /* メインのタイトル設定 */
+    .gs-webResult .gs-title {
+      margin-bottom: 4px !important;
+      display: inline-block !important;
+    }
+    .gs-webResult .gs-title, .gs-webResult .gs-title * {
+      color: var(--accent) !important;
+      text-decoration: none !important;
+      font-size: 20px !important; 
+      font-weight: 400 !important;
+    }
+    .gs-webResult .gs-title:hover, .gs-webResult .gs-title *:hover {
+      text-decoration: underline !important;
+    }
+
+    /* ❌ 重複バグの修正：Googleが内部に隠し持っている2つ目以降の不要なタイトルリンクを徹底非表示 */
+    .gs-webResult .gs-title ~ .gs-title,
+    .gs-webResult td .gs-title:not(:first-child),
+    .gs-webResult .gs-div-link {
+      display: none !important;
+    }
+
+    /* スニペット（説明文）の調整 */
+    .gs-webResult .gs-snippet {
+      color: var(--text-sub) !important;
+      font-size: 14px !important;
+      line-height: 1.58 !important;
+      margin-top: 2px !important;
+      display: block !important;
+    }
+
+    /* 重複して下部に表示される元のURL（https://...）は非表示 */
+    .gs-webResult .gs-visibleUrl:not(.surge-first-url) {
+      display: none !important;
+    }
+
+    /* ファビコン用の丸い入れ物 */
+    .surge-favicon-box {
+      width: 26px;
+      height: 26px;
+      background-color: #f1f3f4;
+      border-radius: 50%;
+      padding: 4px;
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      vertical-align: middle;
+      flex-shrink: 0;
+    }
+    .surge-favicon-box img {
+      width: 16px;
+      height: 16px;
+      border-radius: 2px;
+    }
+
+    /* Google標準の不要パーツ隠し */
+    .gs-webResult .gsc-favicon, .gsc-tabsArea, .gsc-result-info, .gsc-orderby-container, .gcsc-find-more-on-google { 
+      display: none !important; 
+    }
+    .gsc-control-cse { padding: 0 !important; font-family: inherit !important; }
+    
+    /* --- Google風ナレッジパネル（右側） --- */
+    .knowledge-panel {
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      background: #ffffff;
+      box-shadow: 0 1px 6px rgba(32,33,36,0.05);
+      display: none;
+    }
+    .kp-title { font-size: 30px; font-weight: 400; margin: 0; color: #202124; }
+    .kp-subtitle { font-size: 14px; color: #70757a; margin: 4px 0 16px 0; }
+    .kp-extract { font-size: 14px; line-height: 1.6; color: #202124; margin-bottom: 16px; }
+    .kp-source { font-size: 12px; color: #70757a; }
+    .kp-source a { color: #1a0dab; text-decoration: none; }
+    .kp-source a:hover { text-decoration: underline; }
+
+    .pulse-loader { display: inline-block; color: #70757a; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: .4; } 50% { opacity: 1; } }
+
+    @media (max-width: 900px) {
+      .main-contents { padding-left: 20px; padding-right: 20px; }
+      .content-body { flex-direction: column; gap: 20px; }
+      .left-column { width: 100%; }
+      .right-column { max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header-wrapper">
+    <div class="main-contents">
+      <div class="search-container">
+        <form id="searchForm">
+          <input type="search" id="searchInput" placeholder="SURGE で検索…" autocomplete="off">
+        </form>
+      </div>
+
+      <div class="search-tabs">
+        <div class="tab active" data-type="web" id="tab-web" onclick="clickTab(this)">すべて</div>
+        <div class="tab" data-type="image" id="tab-image" onclick="clickTab(this)">画像</div>
+        <div class="tab" data-type="video" onclick="clickTab(this)">動画</div>
+        <div class="tab tab-ai" data-type="ai" id="tab-ai" onclick="clickTab(this)">✨ AIチャット</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-contents">
+    <div class="content-body">
+      
+      <div class="left-column">
+        
+        <div id="dictionaryCard" class="utility-card">
+          <div class="card-label" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>SURGE Dictionary</span>
+            <a id="dictOpenLink" href="#" target="_blank" style="color: #1a73e8; text-decoration: none; font-size: 11px; margin-right: 20px; border: 1px solid #dadce0; padding: 4px 12px; border-radius: 6px;">別タブで開く ↗</a>
+          </div>
+          <iframe id="dictIframe"></iframe>
+        </div>
+
+        <div id="convertCard" class="utility-card">
+          <div class="card-label" id="convTitle">換算</div>
+          <div class="conv-flex">
+            <div class="conv-group"><input type="number" id="convInput1" class="conv-input" oninput="calcConv(1)"><div id="convUnit1" style="font-size:12px; color:#70757a;">---</div></div>
+            <div style="font-size:20px; color:#ccc;">＝</div>
+            <div class="conv-group"><input type="number" id="convInput2" class="conv-input" oninput="calcConv(2)"><div id="convUnit2" style="font-size:12px; color:#70757a;">---</div></div>
+          </div>
+        </div>
+
+        <div id="translationCard" class="utility-card">
+          <div class="card-label">翻訳 (Enterで実行 / Shift+Enterで改行)</div>
+          <div class="trans-area">
+            <textarea id="transInput" class="trans-textarea" rows="2" placeholder="翻訳したいテキストを入力..."></textarea>
+            <div style="color:#ccc; padding-top: 2px;">→</div>
+            <div id="transOutput" style="flex:1; font-size:18px; color:#1a73e8; font-weight:500; white-wrap: pre-wrap;">...</div>
+          </div>
+        </div>
+
+        <div id="aiSummaryBox">
+          <span class="ai-badge">SURGE AI 要約</span>
+          <div id="aiSummaryContent"><span class="pulse-loader">思考中...</span></div>
+        </div>
+
+        <div id="aiModeContainer">
+          <div id="aiChatHistory"></div>
+          <div class="chat-input-group">
+            <input type="text" id="aiReplyInput" class="chat-input-style" placeholder="AIにさらに質問する..." onkeydown="if(event.key==='Enter'&&!event.isComposing) sendAIFollowUp()">
+            <button onclick="sendAIFollowUp()" class="chat-send-btn">送信</button>
+          </div>
+        </div>
+
+        <div id="webResultsArea">
+          <div class="gcse-searchresults-only" data-gname="searchresults-only"></div>
+        </div>
+        
+      </div>
+      
+      <div class="right-column">
+        <div id="knowledgePanel" class="knowledge-panel">
+          <h2 id="kpTitle" class="kp-title"></h2>
+          <div id="kpSubtitle" class="kp-subtitle"></div>
+          <div id="kpExtract" class="kp-extract"></div>
+          <div class="kp-source">出典: <a id="kpLink" href="#" target="_blank">ウィキペディア</a></div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <script>
+    const WORKER_URL = "https://surge.proluce.workers.dev/";
+    const RATES = { USD: 150.2, EUR: 162.5 };
+    
+    let chatContext = [];
+
+    function checkAndShowDictionary(q) {
+      const card = document.getElementById('dictionaryCard');
+      const iframe = document.getElementById('dictIframe');
+      const openLink = document.getElementById('dictOpenLink');
+      const match = q.match(/(.+)(意味|とは|辞書)/);
+      if (match) {
+        const word = match[1].trim();
+        const dictUrl = `https://surge.ad-hub.f5.si/dictionary/?q=${encodeURIComponent(word)}`;
+        card.style.display = 'block';
+        iframe.src = dictUrl;
+        openLink.href = dictUrl;
+        return true;
+      }
+      card.style.display = 'none'; return false;
+    }
+
+    function checkAndShowConvert(q) {
+      const card = document.getElementById('convertCard');
+      const match = q.match(/(\d+)\s*(ドル|円|USD|JPY)/i);
+      if (match) {
+        card.style.display = 'block';
+        let val = parseFloat(match[1]);
+        let type = match[2].toLowerCase();
+        window.currentRate = (type === 'ドル' || type === 'usd') ? RATES.USD : 1/RATES.USD;
+        document.getElementById('convInput1').value = val;
+        document.getElementById('convUnit1').innerText = (type === 'ドル' || type === 'usd') ? 'USD' : 'JPY';
+        document.getElementById('convUnit2').innerText = (type === 'ドル' || type === 'usd') ? 'JPY' : 'USD';
+        calcConv(1); return true;
+      }
+      card.style.display = 'none'; return false;
+    }
+
+    function calcConv(s) {
+      const i1 = document.getElementById('convInput1'), i2 = document.getElementById('convInput2');
+      if (!i1.value && !i2.value) return;
+      if (s === 1) i2.value = (parseFloat(i1.value) * window.currentRate).toFixed(2);
+      else i1.value = (parseFloat(i2.value) / window.currentRate).toFixed(2);
+    }
+
+    async function runTranslation(text) {
+      if (!text.trim()) return;
+      const output = document.getElementById('transOutput'); 
+      output.innerHTML = '<span class="pulse-loader">翻訳中...</span>';
+      try {
+        const res = await fetch(WORKER_URL, { 
+          method: "POST", 
+          headers: { "Content-Type": "application/json" }, 
+          body: JSON.stringify({ inputs: `翻訳して。結果のみ出力すること。翻訳対象: ${text}` }) 
+        });
+        const data = await res.json();
+        let resultText = (Array.isArray(data) ? data[0].generated_text : data.generated_text) || "";
+        output.innerText = resultText.split("AI:").pop().trim();
+      } catch (e) { 
+        output.innerText = "翻訳エラーが発生しました。接続を確認してください。"; 
+      }
+    }
+
+    function checkAndShowTranslation(q) {
+      const match = q.match(/(.+)(英語|翻訳|訳)/);
+      if (match) {
+        document.getElementById('translationCard').style.display = 'block';
+        const targetText = match[1].trim();
+        document.getElementById('transInput').value = targetText;
+        runTranslation(targetText); return true;
+      }
+      document.getElementById('translationCard').style.display = 'none'; return false;
+    }
+
+    document.getElementById('transInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+        e.preventDefault();
+        runTranslation(e.target.value);
+      }
+    });
+
+    function clickTab(el) {
+      const type = el.getAttribute('data-type');
+      const q = document.getElementById('searchInput').value.trim();
+      if (!q) return;
+      if (type === 'image') { location.href = `https://surge.ad-hub.f5.si/pro-search/search?q=${encodeURIComponent(q)}#gsc.tab=1&gsc.q=${encodeURIComponent(q)}`; return; }
+      
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); 
+      el.classList.add('active');
+      
+      const summaryBox = document.getElementById('aiSummaryBox');
+      const aiModeArea = document.getElementById('aiModeContainer');
+      const webArea = document.getElementById('webResultsArea');
+      const element = google.search.cse.element.getElement("searchresults-only");
+
+      if (type === 'ai') {
+        webArea.style.display = 'none'; 
+        summaryBox.style.display = 'none'; 
+        document.querySelectorAll('.utility-card').forEach(c => c.style.display = 'none');
+        document.getElementById('knowledgePanel').style.display = 'none';
+        aiModeArea.style.display = 'block';
+        if (!document.getElementById('aiChatHistory').hasChildNodes()) sendAIFollowUp(q);
+      } else {
+        aiModeArea.style.display = 'none'; 
+        webArea.style.display = 'block';
+        if (type === 'web') {
+          const isUtil = checkAndShowDictionary(q) || checkAndShowConvert(q) || checkAndShowTranslation(q);
+          summaryBox.style.display = isUtil ? 'none' : 'block';
+          if (!isUtil) { getAIResponse(q, 'aiSummaryContent'); searchWikipedia(q); }
+        }
+        if (element) element.execute(q);
+      }
+    }
+
+    async function getAIResponse(q, id) {
+      const target = document.getElementById(id); 
+      target.innerHTML = '<span class="pulse-loader">思考中...</span>';
+      try {
+        const res = await fetch(WORKER_URL, { 
+          method: "POST", 
+          headers: { "Content-Type": "application/json" }, 
+          body: JSON.stringify({ inputs: `SURGE AI。以下の質問に簡潔に答えて。質問: ${q}` }) 
+        });
+        const data = await res.json();
+        let resultText = (Array.isArray(data) ? data[0].generated_text : data.generated_text) || "";
+        target.innerText = resultText.split("AI:").pop().trim();
+      } catch (e) { target.innerText = "一時的にAI要約を生成できません。時間を置いて再度お試しください。"; }
+    }
+
+    async function sendAIFollowUp(customQ) {
+      const input = document.getElementById('aiReplyInput');
+      const q = customQ || input.value.trim();
+      if (!q) return;
+
+      const hist = document.getElementById('aiChatHistory');
+      hist.innerHTML += `<div class="user-bubble">${q}</div>`;
+      if(!customQ) input.value = "";
+      
+      const aiDiv = document.createElement('div');
+      aiDiv.className = 'ai-bubble'; 
+      aiDiv.innerHTML = '<span class="pulse-loader">・ ・ ・</span>';
+      hist.appendChild(aiDiv);
+      hist.scrollTop = hist.scrollHeight;
+
+      chatContext.push({ role: "user", content: q });
+
+      try {
+        const res = await fetch(WORKER_URL, { 
+          method: "POST", 
+          headers: { "Content-Type": "application/json" }, 
+          body: JSON.stringify({ inputs: q, context: chatContext }) 
+        });
+        const data = await res.json();
+        let aiText = (Array.isArray(data) ? data[0].generated_text : data.generated_text) || "";
+        aiText = aiText.split("AI:").pop().trim();
+        aiDiv.innerText = aiText;
+        chatContext.push({ role: "assistant", content: aiText });
+      } catch (e) { aiDiv.innerText = "エラー: 接続に失敗しました。もう一度メッセージを送信してください。"; }
+      hist.scrollTop = hist.scrollHeight;
+    }
+
+    async function searchWikipedia(query) {
+      const panel = document.getElementById('knowledgePanel');
+      const cleanQuery = query.replace(/(意味|とは|辞書|英語|翻訳|訳)/g, '').trim();
+      if (!cleanQuery) { panel.style.display = 'none'; return; }
+      try {
+        const searchUrl = `https://ja.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(cleanQuery)}&limit=1&namespace=0&format=json&origin=*`;
+        const searchRes = await fetch(searchUrl);
+        const searchData = await searchRes.json();
+        if (searchData[1] && searchData[1].length > 0) {
+          const exactTitle = searchData[1][0];
+          const summaryUrl = `https://ja.wikipedia.org/w/api.php?action=query&prop=extracts|pageprops&exintro&explaintext&redirects=1&titles=${encodeURIComponent(exactTitle)}&format=json&origin=*`;
+          const summaryRes = await fetch(summaryUrl);
+          const summaryData = await summaryRes.json();
+          const pages = summaryData.query.pages;
+          const pageId = Object.keys(pages)[0];
+          if (pageId !== "-1") {
+            const page = pages[pageId];
+            const extractText = page.extract ? page.extract.trim() : "";
+            if (extractText.length > 0) {
+              let subtitle = "百科事典";
+              if (extractText.includes("企業") || extractText.includes("会社")) subtitle = "企業";
+              else if (extractText.includes("サービス") || extractText.includes("サイト")) subtitle = "ウェブサービス";
+              else if (extractText.includes("人物") || extractText.includes("生まれ")) subtitle = "人物";
+              document.getElementById('kpTitle').innerText = exactTitle;
+              document.getElementById('kpSubtitle').innerText = subtitle;
+              document.getElementById('kpExtract').innerText = extractText.length > 300 ? extractText.substring(0, 300) + "..." : extractText;
+              document.getElementById('kpLink').href = `https://ja.wikipedia.org/wiki/${encodeURIComponent(exactTitle)}`;
+              panel.style.display = 'block'; return;
+            }
+          }
+        }
+        panel.style.display = 'none';
+      } catch (e) { panel.style.display = 'none'; }
+    }
+
+    window.__gcse = {
+      callback: function() {
+        const q = new URLSearchParams(location.search).get('q');
+        if (q) {
+          document.getElementById('searchInput').value = q;
+          const isUtil = checkAndShowDictionary(q) || checkAndShowConvert(q) || checkAndShowTranslation(q);
+          if (!isUtil) { 
+            document.getElementById('aiSummaryBox').style.display = 'block'; 
+            getAIResponse(q, 'aiSummaryContent'); searchWikipedia(q);
+          }
+          google.search.cse.element.execute(q);
+        }
+      }
+    };
+
+    /* --- 🌟 ファビコンを配置して物理的にタイトルより上に移動させるロジック --- */
+const observer = new MutationObserver(() => {
+  const results = document.querySelectorAll('.gsc-webResult');
+
+  results.forEach(res => {
+    if (res.querySelector('.surge-first-url')) return;
+    if (res.closest('.gsc-adBlock') || res.style.display === 'none' || res.offsetHeight === 0) return;
+
+    const urlElements = res.querySelectorAll('.gs-visibleUrl');
+    const titles = res.querySelectorAll('.gs-title');
+
+    const titleElement = res.querySelector('.gs-title');
+
+    /* =========================
+       ✅ ① タイトル重複を完全排除
+    ========================= */
+    if (titles.length > 1) {
+      for (let i = 1; i < titles.length; i++) {
+        titles[i].style.display = 'none';
+      }
+    }
+
+    /* =========================
+       ② URL＋favicon処理（既存）
+    ========================= */
+    if (urlElements.length > 0 && titleElement) {
+      const mainUrlEl = urlElements[0];
+
+      if (!mainUrlEl.classList.contains('surge-first-url')) {
+        mainUrlEl.classList.add('surge-first-url');
+
+        let urlText = mainUrlEl.innerText.trim();
+        let domain = "";
+
+        try {
+          let parseUrl = urlText;
+          if (!parseUrl.startsWith('http')) parseUrl = 'http://' + parseUrl;
+          domain = new URL(parseUrl).hostname;
+        } catch (e) {
+          domain = "";
+        }
+
+        if (domain && !mainUrlEl.querySelector('.surge-favicon-box')) {
+          const faviconBox = document.createElement('div');
+          faviconBox.className = 'surge-favicon-box';
+
+          const faviconImg = document.createElement('img');
+          faviconImg.src = `https://www.google.com/s2/favicons?sz=32&domain=${domain}`;
+          faviconImg.alt = "favicon";
+
+          faviconBox.appendChild(faviconImg);
+          mainUrlEl.insertBefore(faviconBox, mainUrlEl.firstChild);
+        }
+
+        /* URLをタイトルの上へ移動 */
+        if (titleElement.parentNode) {
+          titleElement.parentNode.insertBefore(mainUrlEl, titleElement);
+        }
+      }
+    }
+  });
+});
+
+    observer.observe(document.getElementById('webResultsArea'), { childList: true, subtree: true });
+
+    document.getElementById('searchForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const val = document.getElementById('searchInput').value.trim();
+      if (val) location.href = "?q=" + encodeURIComponent(val);
+    });
+  </script>
+  <script async src="https://cse.google.com/cse.js?cx=818be131768c247f3"></script>
+</body>
+</html>
