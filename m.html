@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>フリマ利益計算ツール</title>
+
+<style>
+body{
+  margin:0;
+  font-family:-apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial;
+  background:#f6f7fb;
+  color:#222;
+}
+
+/* ヘッダー */
+header{
+  background:#ffffff;
+  padding:16px;
+  text-align:center;
+  font-weight:bold;
+  font-size:18px;
+  border-bottom:1px solid #eee;
+}
+
+/* タブ */
+nav{
+  display:flex;
+  background:white;
+}
+
+nav button{
+  flex:1;
+  padding:14px;
+  border:none;
+  background:white;
+  font-size:14px;
+  cursor:pointer;
+  border-bottom:2px solid transparent;
+}
+
+nav button.active{
+  border-bottom:2px solid #3b82f6;
+  color:#3b82f6;
+  font-weight:bold;
+}
+
+/* コンテナ */
+.container{
+  max-width:500px;
+  margin:auto;
+  padding:15px;
+}
+
+/* カード */
+.card{
+  background:white;
+  border-radius:14px;
+  padding:15px;
+  margin-top:15px;
+  box-shadow:0 2px 10px rgba(0,0,0,0.05);
+}
+
+/* 入力 */
+label{
+  font-size:12px;
+  color:#666;
+}
+
+input, select{
+  width:100%;
+  padding:12px;
+  margin-top:6px;
+  margin-bottom:12px;
+  border-radius:10px;
+  border:1px solid #ddd;
+  outline:none;
+  font-size:14px;
+}
+
+/* ボタン */
+button.calc{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:10px;
+  background:#3b82f6;
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+/* 結果 */
+.result{
+  margin-top:12px;
+  padding:12px;
+  background:#f9fafb;
+  border-radius:10px;
+  font-size:14px;
+  line-height:1.6;
+}
+
+.good{ color:#16a34a; font-weight:bold; }
+.bad{ color:#dc2626; font-weight:bold; }
+
+/* 非表示 */
+.hidden{ display:none; }
+</style>
+</head>
+
+<body>
+
+<header>フリマ利益計算 & 割り勘</header>
+
+<nav>
+<button onclick="showTab('split',this)" class="active">割り勘</button>
+<button onclick="showTab('flea',this)">フリマ</button>
+</nav>
+
+<div class="container">
+
+<!-- 割り勘 -->
+<div id="split" class="card">
+
+<h3>割り勘</h3>
+
+<label>合計金額</label>
+<input id="total" type="number" placeholder="例：3000">
+
+<label>人数</label>
+<input id="people" type="number" placeholder="例：3">
+
+<button class="calc" onclick="calcSplit()">計算</button>
+
+<div class="result" id="splitResult">結果がここに出る</div>
+
+</div>
+
+<!-- フリマ -->
+<div id="flea" class="card hidden">
+
+<h3>フリマ利益計算</h3>
+
+<label>販売価格</label>
+<input id="price" type="number" placeholder="例：2000">
+
+<label>出品サイト</label>
+<select id="site">
+  <option value="mercari">メルカリ (10%)</option>
+  <option value="yahuoku">ヤフーフリマ (5%)</option>
+  <option value="rakuma">ラクマ (6%)</option>
+</select>
+
+<label>送料（手動でもOK）</label>
+<select id="shipping">
+  <option value="0">未選択（自動計算なし）</option>
+  <option value="210">ネコポス 210円</option>
+  <option value="450">宅急便コンパクト 450円</option>
+  <option value="750">60サイズ 750円</option>
+  <option value="850">80サイズ 850円</option>
+  <option value="1050">100サイズ 1050円</option>
+</select>
+
+<p style="font-size:12px;color:#888;margin-top:-5px;">
+※サイズ入力なしでもOK（自分で送料選べる）
+</p>
+
+<label>（任意）縦</label>
+<input id="h" type="number">
+
+<label>横</label>
+<input id="w" type="number">
+
+<label>高さ</label>
+<input id="d" type="number">
+
+<button class="calc" onclick="calcFlea()">利益計算</button>
+
+<div class="result" id="fleaResult">結果がここに出る</div>
+
+</div>
+
+</div>
+
+<script>
+function showTab(tab,el){
+  document.getElementById("split").classList.add("hidden");
+  document.getElementById("flea").classList.add("hidden");
+
+  document.getElementById(tab).classList.remove("hidden");
+
+  document.querySelectorAll("nav button").forEach(b=>{
+    b.classList.remove("active");
+  });
+  el.classList.add("active");
+}
+
+/* 割り勘 */
+function calcSplit(){
+  let total = Number(document.getElementById("total").value);
+  let people = Number(document.getElementById("people").value);
+
+  if(!total || !people) return;
+
+  let per = Math.floor(total/people);
+  let rest = total%people;
+
+  document.getElementById("splitResult").innerHTML =
+    `1人あたり <b>${per}円</b><br>端数 <b>${rest}円</b>`;
+}
+
+/* 手数料 */
+function feeRate(site){
+  if(site==="mercari") return 0.10;
+  if(site==="yahuoku") return 0.05;
+  if(site==="rakuma") return 0.06;
+  return 0.10;
+}
+
+/* フリマ */
+function calcFlea(){
+  let price = Number(document.getElementById("price").value);
+  let site = document.getElementById("site").value;
+  let shipping = Number(document.getElementById("shipping").value);
+
+  if(!price) return;
+
+  // 手動送料が未選択なら0扱い
+  if(!shipping) shipping = 0;
+
+  let fee = Math.floor(price * feeRate(site));
+  let profit = price - fee - shipping;
+
+  let sites = [
+    {name:"メルカリ", fee:0.10},
+    {name:"ヤフーフリマ", fee:0.05},
+    {name:"ラクマ", fee:0.06}
+  ];
+
+  let best = "";
+  let bestProfit = -999999;
+
+  sites.forEach(s=>{
+    let f = Math.floor(price * s.fee);
+    let p = price - f - shipping;
+    if(p > bestProfit){
+      bestProfit = p;
+      best = `${s.name} ${p}円`;
+    }
+  });
+
+  document.getElementById("fleaResult").innerHTML = `
+  手数料 <b>- ${fee}円</b><br>
+  送料 <b>- ${shipping}円</b><br><br>
+
+  利益 <span class="${profit>=0?'good':'bad'}">${profit}円</span><br><br>
+
+  最適 <b>${best}</b>
+  `;
+}
+</script>
+
+</body>
+</html>
