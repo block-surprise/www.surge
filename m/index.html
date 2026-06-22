@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>フリマ利益＆割り勘ツール</title>
+<style>
+body {
+  font-family: sans-serif;
+  margin: 0;
+  background: #f5f5f5;
+}
+
+header {
+  background: #111;
+  color: white;
+  padding: 15px;
+  text-align: center;
+  font-size: 18px;
+}
+
+nav {
+  display: flex;
+}
+
+nav button {
+  flex: 1;
+  padding: 15px;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.container {
+  padding: 20px;
+}
+
+.card {
+  background: white;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+input, select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  margin-bottom: 10px;
+}
+
+button.calc {
+  background: #111;
+  color: white;
+  padding: 10px;
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.result {
+  font-size: 18px;
+  margin-top: 10px;
+}
+
+.hidden { display: none; }
+
+.good { color: green; font-weight: bold; }
+.bad { color: red; font-weight: bold; }
+</style>
+</head>
+
+<body>
+
+<header>
+フリマ利益計算 & 割り勘ツール
+</header>
+
+<nav>
+<button onclick="showTab('split')">割り勘</button>
+<button onclick="showTab('flea')">フリマ計算</button>
+</nav>
+
+<div class="container">
+
+<!-- 割り勘 -->
+<div id="split" class="card">
+<h2>割り勘計算</h2>
+
+<label>合計金額</label>
+<input id="total" type="number">
+
+<label>人数</label>
+<input id="people" type="number">
+
+<button class="calc" onclick="calcSplit()">計算</button>
+
+<div class="result" id="splitResult"></div>
+</div>
+
+<!-- フリマ -->
+<div id="flea" class="card hidden">
+
+<h2>フリマ利益計算</h2>
+
+<label>販売価格</label>
+<input id="price" type="number">
+
+<label>出品サイト</label>
+<select id="site">
+  <option value="mercari">メルカリ (10%)</option>
+  <option value="yahuoku">ヤフーフリマ (5%)</option>
+  <option value="rakuma">ラクマ (6%)</option>
+</select>
+
+<label>縦 (cm)</label>
+<input id="h" type="number">
+
+<label>横 (cm)</label>
+<input id="w" type="number">
+
+<label>高さ (cm)</label>
+<input id="d" type="number">
+
+<button class="calc" onclick="calcFlea()">利益計算</button>
+
+<div class="result" id="fleaResult"></div>
+
+</div>
+
+</div>
+
+<script>
+function showTab(tab){
+  document.getElementById("split").classList.add("hidden");
+  document.getElementById("flea").classList.add("hidden");
+  document.getElementById(tab).classList.remove("hidden");
+}
+
+/* 割り勘 */
+function calcSplit(){
+  let total = Number(document.getElementById("total").value);
+  let people = Number(document.getElementById("people").value);
+
+  if(!total || !people) return;
+
+  let per = Math.floor(total / people);
+  let rest = total % people;
+
+  document.getElementById("splitResult").innerHTML =
+    `1人あたり: <b>${per}円</b><br>端数: ${rest}円`;
+}
+
+/* 手数料 */
+function getFee(site){
+  if(site === "mercari") return 0.10;
+  if(site === "yahuoku") return 0.05;
+  if(site === "rakuma") return 0.06;
+  return 0.1;
+}
+
+/* 送料判定 */
+function getShipping(size){
+  if(size <= 60) return 750;
+  if(size <= 80) return 850;
+  if(size <= 100) return 1050;
+  return 1500;
+}
+
+/* サイズ判定 */
+function calcSize(h,w,d){
+  return h + w + d;
+}
+
+/* フリマ計算 */
+function calcFlea(){
+  let price = Number(document.getElementById("price").value);
+  let site = document.getElementById("site").value;
+
+  let h = Number(document.getElementById("h").value);
+  let w = Number(document.getElementById("w").value);
+  let d = Number(document.getElementById("d").value);
+
+  if(!price) return;
+
+  let size = calcSize(h,w,d);
+  let shipping = getShipping(size);
+  let feeRate = getFee(site);
+
+  let fee = Math.floor(price * feeRate);
+  let profit = price - fee - shipping;
+
+  let best = "";
+
+  // 比較用
+  let sites = [
+    {name:"メルカリ", fee:0.10},
+    {name:"ヤフーフリマ", fee:0.05},
+    {name:"ラクマ", fee:0.06}
+  ];
+
+  let bestProfit = -999999;
+
+  sites.forEach(s=>{
+    let f = Math.floor(price * s.fee);
+    let p = price - f - shipping;
+    if(p > bestProfit){
+      bestProfit = p;
+      best = `${s.name}: ${p}円`;
+    }
+  });
+
+  document.getElementById("fleaResult").innerHTML = `
+    サイズ合計: <b>${size}cm</b><br>
+    送料目安: <b>${shipping}円</b><br><br>
+
+    手数料: -${fee}円<br>
+    利益: <b class="${profit>0?'good':'bad'}">${profit}円</b><br><br>
+
+    最適: <b>${best}</b>
+  `;
+}
+</script>
+
+</body>
+</html>
