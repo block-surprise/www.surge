@@ -184,11 +184,11 @@ html, body {
       justify-content: center;
       font-size: 1.8rem;
     }
-.news-page {
-  width: 100%;
-  max-width: 720px;
-  margin: 17rem auto 0; /* ← 上に余白追加 */
-  padding: 1rem 1rem 4rem;
+.news-page{
+  width:100%;
+  max-width:720px;
+  margin:8rem auto 0;
+  padding:1rem 1rem 4rem;
 }
 .news-tabs {
   display: flex;
@@ -221,45 +221,71 @@ html, body {
 }
 
 
+.news-list {
+  display: flex;
+  flex-direction: column;
+  gap: .8rem;
+}
+
 .news-card {
   display: flex;
-  gap: 1rem;
-  padding: 1rem;
-  border-radius: 14px;
+  align-items: flex-start;
+  gap: 12px;
+
+  padding: 12px;
+  border-radius: 18px;
+
   background: #fff;
-  border: 1px solid var(--border);
-  box-shadow: 0 2px 10px var(--shadow);
+  border: 1px solid #ececec;
+
   text-decoration: none;
-  color: var(--text);
-  transition: 0.15s;
+  color: inherit;
+
+  transition: .15s;
+}
+
+.news-card:hover {
+  box-shadow: 0 2px 12px rgba(0,0,0,.08);
 }
 
 .news-card:active {
-  transform: scale(0.98);
+  transform: scale(.98);
 }
 
 .news-thumb {
-  width: 90px;
-  height: 90px;
-  background: #eee;
-  border-radius: 10px;
-  flex-shrink: 0;
+  width: 120px;
+  height: 80px;
+
+  border-radius: 12px;
+
   object-fit: cover;
+  flex-shrink: 0;
+
+  background: #f1f3f4;
 }
 
 .news-content {
   flex: 1;
+  min-width: 0;
 }
 
 .news-title {
-  font-weight: 700;
-  font-size: 0.95rem;
-  margin-bottom: 0.4rem;
+  font-size: .95rem;
+  font-weight: 600;
+  line-height: 1.45;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+
+  overflow: hidden;
 }
 
 .news-meta {
-  font-size: 0.75rem;
-  color: var(--muted);
+  margin-top: 8px;
+
+  font-size: .75rem;
+  color: #70757a;
 }
 
   </style>
@@ -406,13 +432,29 @@ async function fetchNews(key) {
       a.target = "_blank";
       a.className = "news-card";
 
-      a.innerHTML = `
-        <div class="news-content">
-          <div class="news-title">${title}</div>
-          <div class="news-meta">${date ? new Date(date).toLocaleString("ja-JP") : ""}</div>
-        </div>
-      `;
+   const thumb =
+  item.querySelector("enclosure")?.getAttribute("url") ||
+  "https://via.placeholder.com/240x160/f1f3f4/999999?text=NEWS";
 
+a.innerHTML = `
+  <img
+    class="news-thumb"
+    src="${thumb}"
+    alt=""
+    loading="lazy"
+    onerror="this.src='https://via.placeholder.com/240x160/f1f3f4/999999?text=NEWS'"
+  >
+
+  <div class="news-content">
+    <div class="news-title">
+      ${title}
+    </div>
+
+    <div class="news-meta">
+      ${date ? new Date(date).toLocaleString("ja-JP") : ""}
+    </div>
+  </div>
+`;
       newsList.appendChild(a);
     });
 
