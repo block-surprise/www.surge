@@ -407,8 +407,8 @@
         // 【1】 リアルタイム地震データ判別・表示ロジック（24時間以内で最大の地震を選出）
     async function fetchRealtimeEarthquake() {
       try {
-        // 直近の震度速報（コード551）を多めに10件取得して精査する
-        const res = await fetch("https://api.p2pquake.net/v2/history?codes=551&limit=10");
+        // 直近の震度速報を多めに15件取得して精査
+        const res = await fetch("https://api.p2pquake.net/v2/history?codes=551&limit=15");
         const data = await res.json();
         
         if (!data || data.length === 0) {
@@ -417,57 +417,51 @@
         }
         
         let targetEvent = null;
-        let maxScaleFound = 0; // 見つかった最大の震度コードを記憶する用
-
+        let maxScaleFound = 0;
         const now = new Date();
 
-        // 10件のデータをループして、24時間以内で最も震度が大きいものを探す
+        // 24時間以内で最も震度が大きいものを探す
         data.forEach(eq => {
-          const maxScale = eq.earthquake.maxScale;
-          const eqTimeStr = eq.earthquake.time;
+          const scale = eq.earthquake.maxScale;
+          if (scale < 30) return; // 震度3未満はスルー
 
-          // 【判定①】 震度3以上（コード30以上）か
-          if (maxScale < 30) return;
-
-          // 【判定②】 1日以内（24時間以内）に発生したか
-          const eqDate = new Date(eqTimeStr.replace(/-/g, "/"));
-          const timeDiff = now.getTime() - eqDate.getTime();
-          const hoursDiff = timeDiff / (1000 * 60 * 60);
+          const eqDate = new Date(eq.earthquake.time.replace(/-/g, "/"));
+          const hoursDiff = (now - eqDate) / (1000 * 60 * 60);
 
           if (hoursDiff > 24) return; // 24時間を超えていたらスルー
 
-          // 【判定③】 これまでにループで見たどの地震よりも震度が大きいか？
-          // （同じ震度だった場合は、より新しい地震を優先するなら >= 、古い本震優先なら > ）
-          if (maxScale > maxScaleFound) {
-            maxScaleFound = maxScale;
-            targetEvent = eq; // これを暫定トップにする
+          if (scale > maxScaleFound) {
+            maxScaleFound = scale;
+            targetEvent = eq; 
           }
         });
 
-        // 24時間以内に震度3以上の地震が1つも残らなかったら枠を消して終了
+        // 24時間以内に震度3以上の地震がなければ枠を隠して終了
+        const panel = document.getElementById("earthquakePanel");
         if (!targetEvent) {
-          earthquakePanel.style.display = "none";
+          panel.style.display = "none";
           return;
         }
 
-        // --- 🟢 最も大きかった地震の描画処理 ---
+        // --- 🟢 最大地震の描画処理 ---
         const maxScaleName = formatScale(targetEvent.earthquake.maxScale);
         const epicenter = targetEvent.earthquake.hypocenter.name || "調査中";
         const domesticTsunami = formatTsunami(targetEvent.earthquake.domesticTsunami);
 
-        // クリック時にその最大地震の詳細ページへID付きで遷移
-        earthquakePanel.onclick = () => {
-          window.location.href = `/earthquake/detail?id=${targetEvent._id}`;
+        // 【🔥ここを修正！】アーカイブと同じように、IDと発生時間を完璧にセットして詳細ページへ送る
+        panel.onclick = () => {
+          window.location.href = `/earthquake/detail?id=${targetEvent._id}&time=${encodeURIComponent(targetEvent.earthquake.time)}`;
         };
 
-        eqInfo.innerHTML = `${targetEvent.earthquake.time}頃、<span style="color:var(--eq-text);">${epicenter}</span>で<span style="background:yellow; padding:0 4px;">過去24時間で最大</span>となる震度<span style="font-size:1.5rem; color:var(--eq-text); font-weight:900;"> ${maxScaleName} </span>の地震がありました。`;
-        eqTsunami.innerText = domesticTsunami + " (クリックで各地の震度を表示)";
+        document.getElementById("eqInfo").innerHTML = `${targetEvent.earthquake.time}頃、<span style="color:var(--eq-text);">${epicenter}</span>で<span style="background:yellow; padding:0 4px;">過去24時間で最大</span>となる震度<span style="font-size:1.5rem; color:var(--eq-text); font-weight:900;"> ${maxScaleName} </span>の地震がありました。`;
+        document.getElementById("eqTsunami").innerText = domesticTsunami + " (クリックで各地の震度を表示)";
 
-        earthquakePanel.style.display = "block";
+        panel.style.display = "block";
       } catch (e) {
         console.error("地震速報の取得失敗:", e);
       }
     }
+
 
 
     function formatScale(code) {
