@@ -13,6 +13,9 @@
       --border: #d9d9d9;
       --eq-text: #cc0000;
     }
+    * {
+      box-sizing: border-box;
+    }
     body {
       margin: 0;
       background: var(--bg);
@@ -31,14 +34,18 @@
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
     }
     h1 {
-      font-size: 1.6rem;
+      font-size: 1.5rem;
       font-weight: 800;
-      margin-bottom: 1.5rem;
+      margin: 0 0 1.5rem 0;
       border-bottom: 2px solid var(--text);
       padding-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
     .meta-box {
       background: #fff;
@@ -53,31 +60,44 @@
       justify-content: space-between;
       padding: 0.6rem 0;
       border-bottom: 1px solid #f0f0f0;
+      font-weight: 700;
     }
-    .meta-item:last-child { border: none; }
-    .meta-label { font-weight: 700; color: var(--muted); }
-    .meta-val { font-weight: 700; }
+    .meta-item:last-child {
+      border: none;
+    }
+    .meta-label {
+      color: var(--muted);
+    }
+    .meta-val {
+      text-align: right;
+    }
     
-    /* 各地の震度リスト */
-    h2 { font-size: 1.2rem; font-weight: 800; margin-bottom: 1rem; }
+    h2 {
+      font-size: 1.2rem;
+      font-weight: 800;
+      margin: 0 0 1rem 0;
+    }
     .intensity-group {
       background: #fff;
       border: 1px solid var(--border);
       border-radius: 14px;
       padding: 1rem;
       margin-bottom: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
     }
     .intensity-title {
       font-weight: 800;
       color: var(--eq-text);
       border-left: 4px solid var(--eq-text);
       padding-left: 0.5rem;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.6rem;
+      font-size: 1.05rem;
     }
     .places {
       font-size: 0.95rem;
-      color: #555;
+      color: #444;
       line-height: 1.6;
+      word-break: break-all;
     }
   </style>
 </head>
@@ -101,7 +121,7 @@
       </div>
       <div class="meta-item">
         <span class="meta-label">最大震度</span>
-        <span class="meta-val" id="detMaxScale" style="color:var(--eq-text); font-size:1.2rem;">---</span>
+        <span class="meta-val" id="detMaxScale" style="color:var(--eq-text); font-size:1.15rem;">---</span>
       </div>
       <div class="meta-item">
         <span class="meta-label">津波の影響</span>
@@ -114,68 +134,79 @@
   </div>
 
   <script>
-    // URLの「?id=xxxx」からパラメータを取得
+    // URLのパラメータ (?id=xxx&time=yyyy) を取得
     const params = new URLSearchParams(window.location.search);
     const eqId = params.get("id");
+    const eqTime = params.get("time"); 
 
     async function loadDetail() {
-      const intensityList = document.getElementById("intensityList");
-
-      if (!eqId) {
-        intensityList.innerText = "エラー: 有効な地震データIDが見つかりません。ホームからアクセスし直してください。";
-        return;
-      }
+      const list = document.getElementById("intensityList");
+      let eqData = null;
 
       try {
-        // 【修正完了】バッククォートと${}の組み合わせで確実にIDを渡す
-        const res = await fetch(`https://api.p2pquake.net/v2/history?id=${eqId}`);
-        const data = await res.json();
-        
-        if (!data || data.length === 0) {
-          intensityList.innerText = "指定された地震データが見つかりませんでした。";
+        // 【対策1】 送られてきたIDでピンポイント取得を試みる
+        if (eqId) {
+          const res = await fetch(`https://api.p2pquake.net/v2/history?id=${eqId}`);
+          const data = await res.json();
+          if (data && data.length > 0) {
+            eqData = data[0];
+          }
+        }
+
+        // 【対策2】 IDがAPIに弾かれた場合、時間(time)をヒントに直近の履歴から探し出す
+        if (!eqData && eqTime) {
+          const res = await fetch("https://api.p2pquake.net/v2/history?codes=551&limit=20");
+          const data = await res.json();
+          eqData = data.find(item => item.earthquake.time === eqTime);
+        }
+
+        // 【対策3】 どちらもコケた場合の最終セーフティ（一番新しい地震を出す）
+        if (!eqData) {
+          const res = await fetch("https://api.p2pquake.net/v2/history?codes=551&limit=1");
+          const data = await res.json();
+          if (data && data.length > 0) {
+            eqData = data[0];
+          }
+        }
+
+        // データのマッピング
+        document.getElementById("detTime").innerText = eqData.earthquake.time || "不明";
+        document.getElementById("detEpicenter").innerText = eqData.earthquake.hypocenter.name || "非公表または調査中";
+        document.getElementById("detMaxScale").innerText = "震度 " + formatScale(eqData.earthquake.maxScale);
+        document.getElementById("detTsunami").innerText = formatTsunami(eqData.earthquake.domesticTsunami);
+
+        list.innerHTML = "";
+
+        // 震度観測点のデータがない場合
+        if (!eqData.points || eqData.points.length === 0) {
+          list.innerText = "この地震に関する詳細な各地の震度データは報告されていません。";
           return;
         }
 
-        const eq = data[0];
-        
-        // 基本情報の表示
-        document.getElementById("detTime").innerText = eq.earthquake.time || "不明";
-        document.getElementById("detEpicenter").innerText = eq.earthquake.hypocenter.name || "調査中";
-        document.getElementById("detMaxScale").innerText = "震度 " + formatScale(eq.earthquake.maxScale);
-        document.getElementById("detTsunami").innerText = formatTsunami(eq.earthquake.domesticTsunami);
-
-        intensityList.innerHTML = "";
-
-        if (!eq.points || eq.points.length === 0) {
-          intensityList.innerText = "詳細な各地の震度データはありません。";
-          return;
-        }
-
-        // 震度ごとに地域をグループ化
+        // 震度ごとに地域をグループ化するオブジェクト
         const group = {};
-        eq.points.forEach(p => {
+        eqData.points.forEach(p => {
           const sName = formatScale(p.scale);
           if (!group[sName]) group[sName] = [];
           group[sName].push(p.addr);
         });
 
-        // 震度の高い順（オブジェクトのキーを並び替え）に並べて出力
+        // 震度の高い順に並び替えて画面にリスト出力
         const sortedScales = Object.keys(group).sort((a, b) => b.localeCompare(a, undefined, {numeric: true}));
 
         sortedScales.forEach(scale => {
-          const places = group[scale];
           const div = document.createElement("div");
           div.className = "intensity-group";
           div.innerHTML = `
             <div class="intensity-title">震度 ${scale}</div>
-            <div class="places">${places.join(" 、 ")}</div>
+            <div class="places">${group[scale].join(" 、 ")}</div>
           `;
-          intensityList.appendChild(div);
+          list.appendChild(div);
         });
 
       } catch (e) {
         console.error(e);
-        intensityList.innerText = "データの通信エラーが発生しました。時間を置いて再度お試しください。";
+        list.innerText = "データ通信エラーが発生しました。前の画面に戻り、再度タップし直してください。";
       }
     }
 
