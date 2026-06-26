@@ -423,7 +423,7 @@
         // 24時間以内で最も震度が大きいものを探す
         data.forEach(eq => {
           const scale = eq.earthquake.maxScale;
-          if (scale < 30) return; // 震度3未満はスルー
+          if (scale < 40) return; // 震度3未満はスルー
 
           const eqDate = new Date(eq.earthquake.time.replace(/-/g, "/"));
           const hoursDiff = (now - eqDate) / (1000 * 60 * 60);
