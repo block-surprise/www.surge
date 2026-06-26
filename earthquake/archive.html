@@ -168,7 +168,7 @@
     // APIから過去100件の震度速報を取得
     async function loadArchive() {
       try {
-        const res = await fetch("https://api.p2pquake.net/v2/history?codes=551&limit=100");
+        const res = await fetch("https://api.p2pquake.net/v2/history?codes=551&limit=10000");
         const data = await res.json();
         
         if (!data || data.length === 0) {
