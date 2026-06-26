@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SURGE - 過去の地震履歴アーカイブ</title>
+  <title>SURGE - 地震履歴アーカイブ</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
     :root {
@@ -12,211 +12,119 @@
       --muted: #888;
       --border: #d9d9d9;
       --shadow: rgba(0,0,0,0.06);
+      --accent: #000;
     }
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: "Hiragino Kaku Gothic ProN", "ヒラギノ角ゴ ProN W3", "Yu Gothic", sans-serif;
-      padding: 2rem 1rem 5rem;
+      margin: 0; background: var(--bg); color: var(--text);
+      font-family: "Hiragino Kaku Gothic ProN", sans-serif; padding: 2rem 1rem 5rem;
     }
-    .container {
-      max-width: 640px;
-      margin: 0 auto;
-    }
+    .container { max-width: 640px; margin: 0 auto; }
     
-    /* ヘッダーエリア */
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 2rem;
-      border-bottom: 2px solid var(--text);
-      padding-bottom: 0.8rem;
-    }
-    .back-btn {
-      text-decoration: none;
-      color: var(--text);
-      font-weight: 700;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.95rem;
-    }
-    h1 {
-      font-size: 1.4rem;
-      font-weight: 800;
-      margin: 0;
-    }
+    /* ヘッダー */
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; border-bottom: 2px solid var(--text); padding-bottom: 0.8rem; }
+    .back-btn { text-decoration: none; color: var(--text); font-weight: 700; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.95rem; }
+    h1 { font-size: 1.4rem; font-weight: 800; margin: 0; }
 
-    /* フィルタータブ */
-    .filter-tabs {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 1.5rem;
-      overflow-x: auto;
-      padding-bottom: 0.3rem;
-    }
-    .filter-btn {
-      border: 1px solid var(--border);
-      background: #fff;
-      padding: 0.4rem 0.9rem;
-      border-radius: 999px;
-      font-size: 0.85rem;
-      font-weight: 700;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: 0.1s;
-    }
-    .filter-btn.active {
-      background: #000;
-      color: #fff;
-      border-color: #000;
-    }
-
-    /* 地震リスト */
-    .eq-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.7rem;
-    }
+    /* リスト */
+    .eq-list { display: flex; flex-direction: column; gap: 0.7rem; }
     .eq-card {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 1rem 1.2rem;
-      border-radius: 14px;
-      background: #fff;
-      border: 1px solid var(--border);
-      box-shadow: 0 2px 10px var(--shadow);
-      text-decoration: none;
-      color: inherit;
-      transition: transform 0.1s, border-color 0.1s;
+      display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.2rem;
+      border-radius: 14px; background: #fff; border: 1px solid var(--border); box-shadow: 0 2px 10px var(--shadow);
+      text-decoration: none; color: inherit; transition: transform 0.1s;
     }
-    .eq-card:active {
-      transform: scale(0.98);
-    }
-    .eq-main-info {
-      display: flex;
-      flex-direction: column;
-      gap: 0.3rem;
-    }
-    .eq-time {
-      font-size: 0.8rem;
-      color: var(--muted);
-      font-weight: 500;
-    }
-    .eq-place {
-      font-weight: 700;
-      font-size: 1rem;
-    }
-    
-    /* 震度バッジ */
-    .eq-badge {
-      padding: 0.3rem 0.7rem;
-      border-radius: 8px;
-      color: #fff;
-      font-size: 0.9rem;
-      font-weight: 900;
-      text-align: center;
-      min-width: 75px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-    }
+    .eq-card:active { transform: scale(0.98); }
+    .eq-main-info { display: flex; flex-direction: column; gap: 0.3rem; }
+    .eq-time { font-size: 0.8rem; color: var(--muted); font-weight: 500; }
+    .eq-place { font-weight: 700; font-size: 1rem; }
+    .eq-badge { padding: 0.3rem 0.7rem; border-radius: 8px; color: #fff; font-size: 0.9rem; font-weight: 900; text-align: center; min-width: 75px; }
 
-    /* 読み込み中・エラーメッセージ */
-    .status-msg {
-      text-align: center;
-      padding: 3rem 1rem;
-      color: var(--muted);
-      font-weight: 700;
+    /* 📄 ページネーション（UIデザイン） */
+    .pagination {
+      display: flex; justify-content: center; align-items: center; gap: 0.4rem; margin-top: 2.5rem; flex-wrap: wrap;
     }
+    .page-btn {
+      border: 1px solid var(--border); background: #fff; color: var(--text);
+      min-width: 38px; height: 38px; border-radius: 10px; font-size: 0.9rem; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.1s;
+    }
+    .page-btn:hover { background: #f1f3f5; }
+    .page-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); pointer-events: none; }
+    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; background: #f8f9fa; }
+
+    .status-msg { text-align: center; padding: 3rem 1rem; color: var(--muted); font-weight: 700; }
   </style>
 </head>
 <body>
 
   <div class="container">
     <div class="header">
-      <a href="javascript:history.back()" class="back-btn">
-        <i class="fa-solid fa-arrow-left"></i> 戻る
-      </a>
-      <h1><i class="fa-solid fa-clock-rotate-left"></i> 地震履歴（直近100件）</h1>
-    </div>
-
-    <div class="filter-tabs">
-      <button class="filter-btn active" data-min-scale="0">すべて</button>
-      <button class="filter-btn" data-min-scale="30">震度 3 以上</button>
-      <button class="filter-btn" data-min-scale="40">震度 4 以上</button>
-      <button class="filter-btn" data-min-scale="50">震度 5弱 以上</button>
+      <a href="javascript:history.back()" class="back-btn"><i class="fa-solid fa-arrow-left"></i> 戻る</a>
+      <h1><i class="fa-solid fa-database"></i> 地震履歴アーカイブ</h1>
     </div>
 
     <div id="archiveList" class="eq-list">
-      <div class="status-msg">地震履歴データを読み込み中...</div>
+      <div class="status-msg">データを読み込み中...</div>
     </div>
+
+    <div id="pagination" class="pagination"></div>
   </div>
 
   <script>
     const archiveList = document.getElementById("archiveList");
-    const filterBtns = document.querySelectorAll(".filter-btn");
+    const paginationContainer = document.getElementById("pagination");
     
-    let allEarthquakes = []; // 取得したすべての地震データを記憶する用
-    let currentFilter = 0;   // 現在の最低震度フィルター
+    const LIMIT = 50;  // 1ページあたりに表示する件数（50件くらいが見やすくておすすめ）
+    let currentPage = 1; // 現在のページ番号
 
-    // APIから過去100件の震度速報を取得
-    async function loadArchive() {
+    // 指定されたページの地震データをAPIから取得する関数
+    async function loadArchive(page) {
+      window.scrollTo({ top: 0, behavior: 'smooth' }); // ページ切り替え時に上までスクロール
+      archiveList.innerHTML = '<div class="status-msg">過去データを探索中...</div>';
+      paginationContainer.innerHTML = '';
+
+      // offset（スキップ件数）の計算。1ページ目は0、2ページ目は50件飛ばす、3ページ目は100件飛ばす…
+      const offset = (page - 1) * LIMIT;
+
       try {
-        const res = await fetch("https://api.p2pquake.net/v2/history?codes=551&limit=10000");
+        // APIURLにlimitとoffsetを組み込んで過去へと遡る
+        const res = await fetch(`https://api.p2pquake.net/v2/history?codes=551&limit=${LIMIT}&offset=${offset}`);
         const data = await res.json();
         
         if (!data || data.length === 0) {
-          archiveList.innerHTML = '<div class="status-msg">地震データが見つかりませんでした。</div>';
+          archiveList.innerHTML = '<div class="status-msg">これ以上過去の地震データはありません。</div>';
+          renderPagination(false); // 次へ進めない状態でボタンを生成
           return;
         }
 
-        allEarthquakes = data;
-        renderList(); // リストの描画処理へ
+        renderList(data);
+        renderPagination(data.length === LIMIT); // ぴったりLIMIT件取れたら「次のページもある」と判断
 
       } catch (e) {
         console.error(e);
-        archiveList.innerHTML = '<div class="status-msg">データの取得に失敗しました。通信環境を確認してください。</div>';
+        archiveList.innerHTML = '<div class="status-msg">データの取得に失敗しました。</div>';
       }
     }
 
-    // 画面にリストを描画する関数（フィルター対応）
-    function renderList() {
+    // リスト描画
+    function renderList(data) {
       archiveList.innerHTML = "";
 
-      // 選択されている震度以上のデータだけに絞り込む（JavaScriptのfilter機能）
-      const filteredData = allEarthquakes.filter(eq => {
-        const scale = eq.earthquake.maxScale || 0;
-        return scale >= currentFilter;
-      });
-
-      if (filteredData.length === 0) {
-        archiveList.innerHTML = '<div class="status-msg">条件に一致する地震情報はありません。</div>';
-        return;
-      }
-
-      filteredData.forEach(eq => {
+      data.forEach(eq => {
         const card = document.createElement("a");
-        // 【重要】タップしたら詳細ページ(detail.html)へ、IDと時間を持たせて飛ばす
         card.href = `/earthquake/detail?id=${eq._id}&time=${encodeURIComponent(eq.earthquake.time)}`;
         card.className = "eq-card";
 
-        const time = eq.earthquake.time; // "2026/06/26 23:00:00"
+        const time = eq.earthquake.time;
         const name = eq.earthquake.hypocenter.name || "震源情報なし";
         const scaleCode = eq.earthquake.maxScale;
         const scaleStr = formatScale(scaleCode);
 
-        // 震度に応じたカードのバッジカラーを決定
-        let badgeColor = "#6c757d"; // 震度1〜2：グレー
-        if (scaleCode >= 50) badgeColor = "#dc2626";      // 震度5弱以上：深い赤
-        else if (scaleCode >= 40) badgeColor = "#ef4444"; // 震度4：明るい赤
-        else if (scaleCode >= 30) badgeColor = "#f59e0b"; // 震度3：オレンジ
-        else if (scaleCode >= 20) badgeColor = "#3b82f6"; // 震度2：青
+        let badgeColor = "#6c757d";
+        if (scaleCode >= 50) badgeColor = "#dc2626";
+        else if (scaleCode >= 40) badgeColor = "#ef4444";
+        else if (scaleCode >= 30) badgeColor = "#f59e0b";
+        else if (scaleCode >= 20) badgeColor = "#3b82f6";
 
         card.innerHTML = `
           <div class="eq-main-info">
@@ -225,30 +133,50 @@
           </div>
           <span class="eq-badge" style="background: ${badgeColor};">震度 ${scaleStr}</span>
         `;
-        
         archiveList.appendChild(card);
       });
     }
 
-    // フィルターボタンがクリックされた時のイベント
-    filterBtns.forEach(btn => {
-      btn.addEventListener("click", () => {
-        filterBtns.forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
+    // 📄 ページネーションボタンを動的に作るロジック
+    function renderPagination(hasNextPage) {
+      paginationContainer.innerHTML = "";
 
-        currentFilter = parseInt(btn.dataset.minScale, 10);
-        renderList(); // リストを再描画
-      });
-    });
+      // 【戻る】ボタン
+      const prevBtn = document.createElement("button");
+      prevBtn.className = "page-btn";
+      prevBtn.innerHTML = '<i class="fa-solid fa-chevron-left"></i>';
+      prevBtn.disabled = (currentPage === 1);
+      prevBtn.onclick = () => { currentPage--; loadArchive(currentPage); };
+      paginationContainer.appendChild(prevBtn);
 
-    // 震度コードの日本語変換
-    function formatScale(code) {
-      const scales = { 10:"1", 20:"2", 30:"3", 40:"4", 45:"5弱", 50:"5強", 55:"6弱", 60:"6強", 70:"7" };
-      return scales[code] || "不明";
+      // 【現在のページを中心にした前後3マスの数字ボタンを表示】
+      let startPage = Math.max(1, currentPage - 2);
+      let endPage = currentPage + 2;
+      if (!hasNextPage) endPage = currentPage; // 次がなければそこで止める
+
+      for (let i = startPage; i <= endPage; i++) {
+        const pageBtn = document.createElement("button");
+        pageBtn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
+        pageBtn.innerText = i;
+        pageBtn.onclick = () => { currentPage = i; loadArchive(currentPage); };
+        paginationContainer.appendChild(pageBtn);
+      }
+
+      // 【進む】ボタン
+      const nextBtn = document.createElement("button");
+      nextBtn.className = "page-btn";
+      nextBtn.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
+      nextBtn.disabled = !hasNextPage;
+      nextBtn.onclick = () => { currentPage++; loadArchive(currentPage); };
+      paginationContainer.appendChild(nextBtn);
     }
 
-    // ページ読み込み時に実行
-    loadArchive();
+    function formatScale(code) {
+      return { 10:"1", 20:"2", 30:"3", 40:"4", 45:"5弱", 50:"5強", 55:"6弱", 60:"6強", 70:"7" }[code] || "不明";
+    }
+
+    // 初期読み込み（最初の1ページ目）
+    loadArchive(currentPage);
   </script>
 </body>
 </html>
