@@ -137,9 +137,18 @@
       });
     }
 
-    // 📄 ページネーションボタンを動的に作るロジック
+    // 📄 ページネーションボタンを動的に作る（100ページ以上対応版）
     function renderPagination(hasNextPage) {
       paginationContainer.innerHTML = "";
+
+      // 【最初へ】ボタン（ページ数が多くなったときに超便利）
+      if (currentPage > 3) {
+        const firstBtn = document.createElement("button");
+        firstBtn.className = "page-btn";
+        firstBtn.innerHTML = '<i class="fa-solid fa-angles-left"></i>';
+        firstBtn.onclick = () => { currentPage = 1; loadArchive(currentPage); };
+        paginationContainer.appendChild(firstBtn);
+      }
 
       // 【戻る】ボタン
       const prevBtn = document.createElement("button");
@@ -149,10 +158,10 @@
       prevBtn.onclick = () => { currentPage--; loadArchive(currentPage); };
       paginationContainer.appendChild(prevBtn);
 
-      // 【現在のページを中心にした前後3マスの数字ボタンを表示】
+      // 【現在のページを中心にした前後5マスの数字ボタンを表示】
       let startPage = Math.max(1, currentPage - 2);
       let endPage = currentPage + 2;
-      if (!hasNextPage) endPage = currentPage; // 次がなければそこで止める
+      if (!hasNextPage) endPage = currentPage;
 
       for (let i = startPage; i <= endPage; i++) {
         const pageBtn = document.createElement("button");
@@ -170,6 +179,7 @@
       nextBtn.onclick = () => { currentPage++; loadArchive(currentPage); };
       paginationContainer.appendChild(nextBtn);
     }
+
 
     function formatScale(code) {
       return { 10:"1", 20:"2", 30:"3", 40:"4", 45:"5弱", 50:"5強", 55:"6弱", 60:"6強", 70:"7" }[code] || "不明";
