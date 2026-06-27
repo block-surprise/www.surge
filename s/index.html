@@ -450,7 +450,7 @@
 
         // 【🔥ここを修正！】アーカイブと同じように、IDと発生時間を完璧にセットして詳細ページへ送る
         panel.onclick = () => {
-          location.assign(`https://www.surge.f5.si/earthquake/detail?id=${targetEvent._id}&time=${encodeURIComponent(targetEvent.earthquake.time)}`);
+          location.assign(`/earthquake/detail?id=${targetEvent._id}&time=${encodeURIComponent(targetEvent.earthquake.time)}`);
         };
 
         document.getElementById("eqInfo").innerHTML = `${targetEvent.earthquake.time}頃、<span style="color:var(--eq-text);">${epicenter}</span>で<span style="background:yellow; padding:0 4px;">過去24時間で最大</span>となる震度<span style="font-size:1.5rem; color:var(--eq-text); font-weight:900;"> ${maxScaleName} </span>の地震がありました。`;
