@@ -371,7 +371,7 @@
     queryInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         const q = queryInput.value.trim();
-        if (q) window.location.href = `https://www.surge.f5.si/s/search?q=${encodeURIComponent(q)}`;
+        if (q) location.assign(`/s/search?q=${encodeURIComponent(q)}`);
       }
     });
 
